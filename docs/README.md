@@ -1,5 +1,11 @@
 # TLDB Web — Phase 1 (interface only)
 
+This is the `docs/` folder of the `tldb-web` repo — GitHub Pages only
+supports serving from a repo's root or a `/docs` folder, so the actual
+site lives here rather than at the repo root, leaving the parent Windows
+folder (`Desktop/TLDB_web/`) free to hold just launcher shortcuts (open
+the live catalog, open admin, open the CSV table).
+
 Web interface for the Tselinny Library Database. Runs on the real catalog
 export (`data/libraryDB.csv`, ~700 books) with cover photos where available
 under `data/covers/` — there is no backend yet, this is a static site, so
@@ -38,7 +44,11 @@ works too.)
   write anything: a QR match always identifies exactly one physical copy
   and opens it directly; an ISBN identifies an edition, so a match filters
   the table to every copy sharing it and only auto-opens the book card when
-  that's unambiguous (exactly one copy).
+  that's unambiguous (exactly one copy). Requests an HD camera stream
+  (`{ width: { ideal: 1920 }, height: { ideal: 1080 } }`) rather than
+  whatever low-res default the browser might otherwise pick — EAN-13's
+  finer bar spacing needs more resolution than QR's built-in redundancy
+  tolerates.
 - **`admin.html`** — stub admin page, linked from the small "ADMIN" link
   above the logo. Gated by a plain client-side password prompt
   (`js/admin.js`) — **not real security**, the password is a readable

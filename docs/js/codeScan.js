@@ -20,6 +20,16 @@
 const TL_ID_PATTERN = /^TL\d{9}$/;
 const ISBN_13_PATTERN = /^97[89]\d{10}$/;
 
+// Without explicit resolution hints, browsers may hand back a low-res
+// default stream (often 640x480) — fine for QR's built-in redundancy, not
+// always enough for EAN-13's finer bar spacing. Ask for HD; "ideal" means
+// the browser still gives back whatever the camera actually supports.
+const VIDEO_CONSTRAINTS = {
+  facingMode: 'environment',
+  width: { ideal: 1920 },
+  height: { ideal: 1080 },
+};
+
 export function validateTLId(id) {
   return TL_ID_PATTERN.test(id);
 }
@@ -61,7 +71,7 @@ export class CodeScanner {
 
     if (this.nativeDetector) {
       this.stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' },
+        video: VIDEO_CONSTRAINTS,
       });
       this.videoEl.srcObject = this.stream;
       await this.videoEl.play();
@@ -70,12 +80,16 @@ export class CodeScanner {
     }
 
     if (this.zxingReader) {
-      // decodeFromVideoDevice handles getUserMedia + its own continuous
-      // decode loop; undefined deviceId lets it pick a default camera.
-      await this.zxingReader.decodeFromVideoDevice(undefined, this.videoEl, (result) => {
-        if (this.paused || !result) return;
-        this.onResult(result.getText());
-      });
+      // decodeFromConstraints handles getUserMedia (with our resolution
+      // hints) + its own continuous decode loop internally.
+      await this.zxingReader.decodeFromConstraints(
+        { video: VIDEO_CONSTRAINTS },
+        this.videoEl,
+        (result) => {
+          if (this.paused || !result) return;
+          this.onResult(result.getText());
+        }
+      );
     }
   }
 
