@@ -678,6 +678,25 @@ button {
   margin: 0 0 8px;
 }
 
+.admin-record-checklist {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 12px;
+  font-size: 12px;
+}
+
+.admin-checklist-item.pending {
+  color: #999;
+}
+
+.admin-checklist-item.done {
+  color: #a8e6b0;
+}
+
+#admin-scan-qr-btn {
+  margin-bottom: 16px;
+}
+
 .admin-record-fields {
   display: grid;
   grid-template-columns: 140px 1fr;
@@ -717,6 +736,17 @@ button {
 
 #admin-record-approve-btn:hover {
   background: #222;
+}
+
+.admin-isbn-warning {
+  grid-column: 1 / -1;
+  background: #3a2c10;
+  border: 1px solid #7a5a1e;
+  color: #e6c675;
+  padding: 8px 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 0 0 4px;
 }
 
 .admin-record-output {

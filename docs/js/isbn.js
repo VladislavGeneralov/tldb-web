@@ -32,3 +32,29 @@ export function extractIsbn13(text) {
   }
   return null;
 }
+
+// Guesses the book's script/language from the ISBN registration group —
+// only the groups actually relevant to this library's likely stock.
+// Group "5" (right after the 978/979 Bookland prefix) is the Russian
+// Federation, used broadly by Russian-language publishers across the
+// former USSR; group "601" is Kazakhstan. Returns null (no guess) for
+// everything else rather than pretending to know.
+export function guessIsbnRegion(isbn) {
+  if (/^97[89]5/.test(isbn)) return 'russian';
+  if (/^978601/.test(isbn)) return 'kazakh';
+  return null;
+}
+
+const CYRILLIC_PATTERN = /[Ѐ-ӿ]/;
+
+// Open Library sometimes only has a MARC record romanized per ALA-LC
+// transliteration rules (e.g. "V poiskakh poteri︠a︡nnogo zvuka" instead of
+// "В поисках потерянного звука") with no Cyrillic edition anywhere for
+// that ISBN — this is a source-data gap, not something a smarter query
+// can fix. Detect it instead of silently handing back romanized text: if
+// the ISBN's region implies non-Latin script but the looked-up text has
+// no Cyrillic characters at all, it's almost certainly transliterated.
+export function looksTransliterated(region, text) {
+  if (!region) return false;
+  return !CYRILLIC_PATTERN.test(text);
+}

@@ -6,9 +6,10 @@
 // protect anything. Real access control needs a backend (see project
 // notes on the future admin panel) and should replace this entirely.
 
-import { isValidIsbn13, extractIsbn13 } from './isbn.js';
+import { isValidIsbn13, extractIsbn13, guessIsbnRegion, looksTransliterated } from './isbn.js';
 import { lookupIsbn } from './isbnLookup.js';
 import { COLUMNS } from './data.js';
+import { CodeScanner, validateTLId, isScanSupported } from './codeScan.js';
 
 const ADMIN_PASSWORD = 'TLDBadmin00';
 const SESSION_KEY = 'tldb-admin-unlocked';
@@ -159,27 +160,23 @@ async function runOcr(blob) {
 }
 
 // --- New record draft form -----------------------------------------------
-// Once we have a validated ISBN (from OCR or manual entry), look it up
-// and show every catalog column as an editable field, pre-filled where
-// the lookup had data. Nothing here writes to the real catalog — there's
-// no backend — so Approve just formats the current field values as a CSV
-// row the admin can paste into libraryDB.csv by hand.
+// Always visible, empty, ready to fill by hand from the start. Scanning a
+// QR sets BOOK ID; scanning/typing an ISBN looks it up and sets the
+// bibliographic fields — either order, independently, neither one wipes
+// what the other already filled in. Nothing here writes to the real
+// catalog — there's no backend — so Approve formats the current field
+// values as a CSV row to paste into libraryDB.csv by hand, after
+// reminding about any columns still left blank (both scans are meant to
+// be done, not just one).
 
-const recordForm = document.getElementById('admin-record-form');
 const recordFields = document.getElementById('admin-record-fields');
 const recordApproveBtn = document.getElementById('admin-record-approve-btn');
 const recordOutput = document.getElementById('admin-record-output');
 const recordCsvArea = document.getElementById('admin-record-csv');
 const recordCopyBtn = document.getElementById('admin-record-copy-btn');
-
-async function handleValidIsbn(isbn) {
-  recordForm.hidden = false;
-  recordOutput.hidden = true;
-  recordFields.innerHTML = '<p class="admin-isbn-note">Looking up ISBN on Open Library…</p>';
-
-  const found = await lookupIsbn(isbn).catch(() => null);
-  renderRecordFields(buildDefaults(isbn, found));
-}
+const recordWarning = document.getElementById('admin-record-warning');
+const checklistQr = document.getElementById('admin-checklist-qr');
+const checklistIsbn = document.getElementById('admin-checklist-isbn');
 
 function todayFormatted() {
   const d = new Date();
@@ -187,26 +184,14 @@ function todayFormatted() {
   return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`;
 }
 
-function buildDefaults(isbn, found) {
+function initialDefaults() {
   const today = todayFormatted();
-  return {
-    num: '',
-    bookId: '',
-    authors: found?.authors || '',
-    name: found?.title || '',
-    publisher: found?.publisher || '',
-    year: found?.year || '',
-    isbn,
-    languages: '',
-    genres: '',
-    condition: '',
-    status: 'Available',
-    createdAt: today,
-    updatedAt: today,
-    storageCell: '',
-    qrLink: '',
-    imageLink: '',
-  };
+  const values = {};
+  for (const col of COLUMNS) values[col.id] = '';
+  values.status = 'Available';
+  values.createdAt = today;
+  values.updatedAt = today;
+  return values;
 }
 
 function renderRecordFields(values) {
@@ -243,12 +228,67 @@ function renderRecordFields(values) {
   }
 }
 
-recordApproveBtn.addEventListener('click', () => {
-  const row = COLUMNS.map((col) => {
-    const input = document.getElementById(`record-${col.id}`);
-    return csvField(input ? input.value : '');
-  }).join(',');
+function setRecordField(id, value) {
+  const input = document.getElementById(`record-${id}`);
+  if (input) input.value = value;
+}
 
+function getRecordField(id) {
+  const input = document.getElementById(`record-${id}`);
+  return input ? input.value : '';
+}
+
+renderRecordFields(initialDefaults());
+
+async function handleValidIsbn(isbn) {
+  setRecordField('isbn', isbn);
+  setChecklist(checklistIsbn, true);
+
+  const found = await lookupIsbn(isbn).catch(() => null);
+  if (found) {
+    if (found.authors) setRecordField('authors', found.authors);
+    if (found.title) setRecordField('name', found.title);
+    if (found.publisher) setRecordField('publisher', found.publisher);
+    if (found.year) setRecordField('year', found.year);
+  }
+
+  // Open Library sometimes only has a romanized MARC record for a given
+  // ISBN, with no Cyrillic/native-script edition at all anywhere in its
+  // data (confirmed by hand for a real book — see project notes) — no
+  // smarter query fixes that, it's a gap in the source data itself. Flag
+  // it instead of silently handing back transliterated text as if it
+  // were correct.
+  const region = guessIsbnRegion(isbn);
+  const combinedText = `${found?.title || ''} ${found?.authors || ''} ${found?.publisher || ''}`;
+  if (found && looksTransliterated(region, combinedText)) {
+    showRecordNotice(
+      '⚠ This looks transliterated/romanized, not native script — Open Library has no ' +
+      'Cyrillic edition for this ISBN. Retype BOOK NAME/AUTHOR(S)/PUBLISHER in the correct ' +
+      'script yourself before approving.'
+    );
+  }
+}
+
+function showRecordNotice(text) {
+  recordWarning.textContent = text;
+  recordWarning.hidden = false;
+}
+
+function setChecklist(el, done) {
+  el.classList.toggle('pending', !done);
+  el.classList.toggle('done', done);
+  el.textContent = (done ? '● ' : '○ ') + el.textContent.slice(2);
+}
+
+recordApproveBtn.addEventListener('click', () => {
+  const empty = COLUMNS.filter((col) => !getRecordField(col.id).trim()).map((col) => col.label);
+  if (empty.length > 0) {
+    showRecordNotice(`⚠ Still blank: ${empty.join(', ')}. Approving anyway just copies what's there.`);
+  } else {
+    recordWarning.hidden = true;
+  }
+
+  const row = COLUMNS.map((col) => csvField(getRecordField(col.id))).join(',');
   recordCsvArea.value = row;
   recordOutput.hidden = false;
 });
@@ -260,4 +300,56 @@ recordCopyBtn.addEventListener('click', () => {
 function csvField(value) {
   if (/[",\n]/.test(value)) return '"' + value.replace(/"/g, '""') + '"';
   return value;
+}
+
+// --- Scan QR (Book ID) ----------------------------------------------------
+// Reuses the same CodeScanner as the public catalog's SCAN button
+// (js/codeScan.js), restricted to qr_code only — QR scanning itself was
+// never the unreliable part (that was EAN-13 barcode decoding), so no
+// need for the OCR/guide-box workaround here.
+
+const qrScanBtn = document.getElementById('admin-scan-qr-btn');
+const qrModal = document.getElementById('admin-qr-modal');
+const qrCloseBtn = document.getElementById('admin-qr-close-btn');
+const qrVideo = document.getElementById('admin-qr-video');
+const qrStatus = document.getElementById('admin-qr-status');
+
+let qrScanner = null;
+
+qrScanBtn.addEventListener('click', openQrScanner);
+qrCloseBtn.addEventListener('click', closeQrScanner);
+
+async function openQrScanner() {
+  qrModal.hidden = false;
+  qrStatus.textContent = "Point the camera at the book's QR code…";
+
+  if (!isScanSupported()) {
+    qrStatus.textContent = "Scanning isn't supported in this browser — try Chrome or Edge.";
+    return;
+  }
+
+  qrScanner = new CodeScanner(qrVideo, ['qr_code']);
+  try {
+    await qrScanner.start((rawValue) => {
+      if (!validateTLId(rawValue)) {
+        qrStatus.textContent = 'NOT A TSELINNY LIBRARY QR CODE';
+        qrScanner.pause();
+        setTimeout(() => qrScanner && qrScanner.resume(), 1500);
+        return;
+      }
+      closeQrScanner();
+      setRecordField('bookId', rawValue);
+      setChecklist(checklistQr, true);
+    });
+  } catch (e) {
+    qrStatus.textContent = 'Could not access the camera. Check browser permissions.';
+  }
+}
+
+function closeQrScanner() {
+  if (qrScanner) {
+    qrScanner.stop();
+    qrScanner = null;
+  }
+  qrModal.hidden = true;
 }
