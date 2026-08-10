@@ -6,6 +6,8 @@
 // protect anything. Real access control needs a backend (see project
 // notes on the future admin panel) and should replace this entirely.
 
+import { CodeScanner, isScanSupported } from './codeScan.js';
+
 const ADMIN_PASSWORD = 'TLDBadmin00';
 const SESSION_KEY = 'tldb-admin-unlocked';
 
@@ -35,3 +37,49 @@ gateForm.addEventListener('submit', (e) => {
     gateInput.focus();
   }
 });
+
+// --- SCAN ISBN test tool ---------------------------------------------
+// Raw decode-and-display only: no catalog lookup, no auto-fill. Just
+// proves whether the camera/decoder combo can actually read a given
+// barcode, and shows exactly what it read. Reuses the same CodeScanner
+// as the public SCAN button, restricted to EAN_13 only.
+
+const isbnScanBtn = document.getElementById('admin-scan-isbn-btn');
+const isbnResult = document.getElementById('admin-isbn-result');
+const isbnScanModal = document.getElementById('admin-scan-modal');
+const isbnScanCloseBtn = document.getElementById('admin-scan-close-btn');
+const isbnScanVideo = document.getElementById('admin-scan-video');
+const isbnScanStatus = document.getElementById('admin-scan-status');
+
+let isbnScanner = null;
+
+isbnScanBtn.addEventListener('click', openIsbnScanner);
+isbnScanCloseBtn.addEventListener('click', closeIsbnScanner);
+
+async function openIsbnScanner() {
+  isbnScanModal.hidden = false;
+  isbnScanStatus.textContent = 'Point the camera at an ISBN barcode…';
+
+  if (!isScanSupported()) {
+    isbnScanStatus.textContent = "Scanning isn't supported in this browser — try Chrome or Edge.";
+    return;
+  }
+
+  isbnScanner = new CodeScanner(isbnScanVideo, ['ean_13']);
+  try {
+    await isbnScanner.start((rawValue) => {
+      isbnResult.textContent = `Last scanned: ${rawValue}`;
+      isbnScanStatus.textContent = `Scanned ${rawValue} — keep scanning or close.`;
+    });
+  } catch (e) {
+    isbnScanStatus.textContent = 'Could not access the camera. Check browser permissions.';
+  }
+}
+
+function closeIsbnScanner() {
+  if (isbnScanner) {
+    isbnScanner.stop();
+    isbnScanner = null;
+  }
+  isbnScanModal.hidden = true;
+}

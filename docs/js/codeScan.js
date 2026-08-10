@@ -45,8 +45,13 @@ export function isScanSupported() {
   );
 }
 
+const NATIVE_FORMAT_NAMES = { qr_code: 'qr_code', ean_13: 'ean_13' };
+
 export class CodeScanner {
-  constructor(videoEl) {
+  // formats: subset of ['qr_code', 'ean_13'] to detect. Defaults to both
+  // (the public SCAN button); the admin ISBN test tool passes ['ean_13']
+  // only, reusing this same tested decoder rather than duplicating it.
+  constructor(videoEl, formats = ['qr_code', 'ean_13']) {
     this.videoEl = videoEl;
     this.stream = null;
     this.rafId = null;
@@ -55,13 +60,14 @@ export class CodeScanner {
     this.zxingReader = null;
 
     this.nativeDetector = 'BarcodeDetector' in window
-      ? new window.BarcodeDetector({ formats: ['qr_code', 'ean_13'] })
+      ? new window.BarcodeDetector({ formats: formats.map((f) => NATIVE_FORMAT_NAMES[f]) })
       : null;
 
     if (!this.nativeDetector && typeof window.ZXing === 'object') {
       const { DecodeHintType, BarcodeFormat, BrowserMultiFormatReader } = window.ZXing;
+      const formatMap = { qr_code: BarcodeFormat.QR_CODE, ean_13: BarcodeFormat.EAN_13 };
       const hints = new Map();
-      hints.set(DecodeHintType.POSSIBLE_FORMATS, [BarcodeFormat.QR_CODE, BarcodeFormat.EAN_13]);
+      hints.set(DecodeHintType.POSSIBLE_FORMATS, formats.map((f) => formatMap[f]));
       this.zxingReader = new BrowserMultiFormatReader(hints);
     }
   }

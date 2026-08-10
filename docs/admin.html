@@ -33,9 +33,23 @@
       <p>Nothing here yet. Planned: scan a QR to start a new record, scan an
         ISBN to auto-fill it from an open book database, mobile-friendly
         entry with camera cover-photo capture. Needs a backend first.</p>
+
+      <div class="admin-isbn-test">
+        <button id="admin-scan-isbn-btn" type="button">SCAN ISBN</button>
+        <p id="admin-isbn-result" class="admin-isbn-result"></p>
+      </div>
     </section>
   </main>
 
-  <script src="js/admin.js"></script>
+  <div id="admin-scan-modal" class="scan-modal" hidden>
+    <div class="scan-modal-content">
+      <button id="admin-scan-close-btn" type="button" class="scan-close" title="Close">×</button>
+      <video id="admin-scan-video" playsinline muted></video>
+      <p id="admin-scan-status" class="scan-status">Point the camera at an ISBN barcode…</p>
+    </div>
+  </div>
+
+  <script src="js/vendor/zxing.min.js"></script>
+  <script type="module" src="js/admin.js"></script>
 </body>
 </html>
