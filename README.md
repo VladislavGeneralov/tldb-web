@@ -7,15 +7,19 @@ desktop app) — there is no backend yet, this is a static site.
 ## Running locally
 
 Browsers block `fetch()` of local files under `file://`, so open this
-through a static server rather than double-clicking `index.html`:
+through a static server rather than double-clicking `index.html`.
+
+On Windows, double-click `run-server.bat` — it starts the server on
+http://localhost:8123/ and opens it in your default browser.
+
+Otherwise, from this folder:
 
 ```
-python -m http.server 8000
+python -m http.server 8123
 ```
 
-then visit http://localhost:8000/.
-
-(VS Code's "Live Server" extension works too.)
+then visit http://localhost:8123/. (VS Code's "Live Server" extension
+works too.)
 
 ## What's implemented
 
