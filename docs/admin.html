@@ -35,25 +35,46 @@
         entry with camera cover-photo capture. Needs a backend first.</p>
 
       <div class="admin-isbn-test">
-        <button id="admin-scan-isbn-btn" type="button">SCAN ISBN (video)</button>
-        <label class="file-btn">
-          SCAN ISBN (photo)
-          <input id="admin-isbn-photo-input" type="file" accept="image/*" capture="environment" hidden />
-        </label>
+        <h3>ISBN capture (test)</h3>
+        <p class="admin-isbn-note">
+          Live video barcode scanning was dropped — real-world test photos
+          were too motion-blurred for EAN-13's precise bar widths, even
+          though the printed digits stayed readable. OCR on the whole photo
+          failed too (background/shadow noise confused it), but OCR on
+          just the text line — cropped tight, nothing else in frame —
+          reads it correctly. So: align just the "ISBN ..." line in the
+          guide box below, capture, and OCR runs only on that crop. Or
+          skip all of it and type the ISBN in yourself.
+        </p>
+
+        <button id="admin-isbn-open-camera-btn" type="button" class="file-btn">Open Camera</button>
+
+        <div id="admin-isbn-camera-wrap" class="admin-isbn-camera-wrap" hidden>
+          <div class="admin-isbn-camera-frame">
+            <video id="admin-isbn-video" playsinline muted></video>
+            <div class="admin-isbn-guide"></div>
+          </div>
+          <p class="admin-isbn-guide-hint">Align the "ISBN ..." text line inside the box — keep the barcode bars out of it.</p>
+          <div class="admin-isbn-camera-actions">
+            <button id="admin-isbn-capture-btn" type="button">Capture</button>
+            <button id="admin-isbn-camera-cancel-btn" type="button">Cancel</button>
+          </div>
+        </div>
+
+        <img id="admin-isbn-photo-preview" class="admin-isbn-photo-preview" hidden alt="Captured ISBN crop" />
+
+        <div class="admin-isbn-entry">
+          <label for="admin-isbn-input">ISBN (from OCR, or type it in)</label>
+          <input id="admin-isbn-input" type="text" inputmode="numeric" placeholder="978-5-..." />
+          <button id="admin-isbn-validate-btn" type="button">Validate</button>
+        </div>
+
         <p id="admin-isbn-result" class="admin-isbn-result"></p>
       </div>
     </section>
   </main>
 
-  <div id="admin-scan-modal" class="scan-modal" hidden>
-    <div class="scan-modal-content">
-      <button id="admin-scan-close-btn" type="button" class="scan-close" title="Close">×</button>
-      <video id="admin-scan-video" playsinline muted></video>
-      <p id="admin-scan-status" class="scan-status">Point the camera at an ISBN barcode…</p>
-    </div>
-  </div>
-
-  <script src="js/vendor/zxing.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <script type="module" src="js/admin.js"></script>
 </body>
 </html>

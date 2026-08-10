@@ -568,9 +568,20 @@ button {
   margin-top: 24px;
   padding-top: 20px;
   border-top: 1px solid #333;
+  max-width: 420px;
 }
 
-#admin-scan-isbn-btn,
+.admin-isbn-test h3 {
+  margin: 0 0 8px;
+}
+
+.admin-isbn-note {
+  color: #999;
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 0 0 14px;
+}
+
 .file-btn {
   display: inline-block;
   background: #000;
@@ -579,11 +590,113 @@ button {
   padding: 8px 14px;
   cursor: pointer;
   font-size: 13px;
-  margin-right: 8px;
 }
 
-#admin-scan-isbn-btn:hover,
 .file-btn:hover {
+  background: #222;
+}
+
+.admin-isbn-photo-preview {
+  display: block;
+  width: 100%;
+  max-height: 260px;
+  object-fit: contain;
+  background: #000;
+  margin-top: 12px;
+}
+
+.admin-isbn-photo-preview[hidden] {
+  display: none;
+}
+
+.admin-isbn-camera-wrap {
+  margin-top: 12px;
+}
+
+.admin-isbn-camera-frame {
+  position: relative;
+  width: 100%;
+  background: #000;
+  overflow: hidden;
+}
+
+.admin-isbn-camera-frame video {
+  width: 100%;
+  display: block;
+}
+
+/* Guide box: a wide short band sized for "ISBN xxx-x-xxxxxxx-x-x" — the
+   dimmed area outside it is just a visual aid, the actual crop uses these
+   same fractions against the video's native resolution (see admin.js). */
+.admin-isbn-guide {
+  position: absolute;
+  left: 7.5%;
+  right: 7.5%;
+  top: 42%;
+  bottom: 42%;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 2000px rgba(0, 0, 0, 0.55);
+  pointer-events: none;
+}
+
+.admin-isbn-guide-hint {
+  color: #999;
+  font-size: 12px;
+  margin: 8px 0;
+}
+
+.admin-isbn-camera-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.admin-isbn-camera-actions button {
+  background: #000;
+  border: 1px solid #fff;
+  color: #f0f0f0;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.admin-isbn-camera-actions button:hover {
+  background: #222;
+}
+
+.admin-isbn-entry {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.admin-isbn-entry label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #999;
+}
+
+.admin-isbn-entry input {
+  background: #222;
+  border: 1px solid #444;
+  color: #f0f0f0;
+  padding: 8px;
+  font-size: 14px;
+  font-family: "Courier New", monospace;
+}
+
+.admin-isbn-entry button {
+  align-self: flex-start;
+  background: #000;
+  border: 1px solid #fff;
+  color: #f0f0f0;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.admin-isbn-entry button:hover {
   background: #222;
 }
 

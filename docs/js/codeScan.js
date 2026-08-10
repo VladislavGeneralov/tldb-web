@@ -12,10 +12,15 @@
 // (jsQR for QR, ZXing for ISBN behind a second "(test)" button) once we
 // decided regular users should scan either code from one button.
 //
-// A DIFFERENT, not-yet-built admin flow will reuse ZXing's ISBN decoding
-// for a write workflow (scan QR to start a new record, scan ISBN to
-// auto-fill it from an open book database) — see project memory. That
-// needs a backend and is not this module's concern.
+// A DIFFERENT, not-yet-built admin flow needs a write workflow (scan QR to
+// start a new record, then get that record's metadata from somewhere) —
+// see project memory. That needs a backend and is not this module's
+// concern. Note: the admin side ended up NOT reusing this module's EAN-13
+// decoding for ISBN — real-world test photos were too motion-blurred for
+// reliable barcode decoding, so admin.js uses OCR (js/isbn.js) on a photo
+// of the printed ISBN digits instead. The public SCAN button below likely
+// has the same real-world ISBN-scanning reliability problem; it hasn't
+// been revisited since that finding.
 
 const TL_ID_PATTERN = /^TL\d{9}$/;
 const ISBN_13_PATTERN = /^97[89]\d{10}$/;
@@ -46,46 +51,6 @@ export function isScanSupported() {
 }
 
 const NATIVE_FORMAT_NAMES = { qr_code: 'qr_code', ean_13: 'ean_13' };
-
-// One-shot decode of a still image (e.g. a native camera photo capture,
-// not a live video stream) — a real device photo is often full sensor
-// resolution with proper focus-lock, unlike any single frame sampled out
-// of a getUserMedia video stream, so this is worth trying when continuous
-// video scanning struggles on a given device.
-export async function decodeStillImage(fileOrUrl, formats = ['ean_13']) {
-  const isBlob = fileOrUrl instanceof Blob;
-
-  if ('BarcodeDetector' in window) {
-    const detector = new window.BarcodeDetector({
-      formats: formats.map((f) => NATIVE_FORMAT_NAMES[f]),
-    });
-    const blob = isBlob ? fileOrUrl : await (await fetch(fileOrUrl)).blob();
-    const bitmap = await createImageBitmap(blob);
-    const codes = await detector.detect(bitmap);
-    return codes.length > 0 ? codes[0].rawValue : null;
-  }
-
-  if (typeof window.ZXing === 'object') {
-    const { DecodeHintType, BarcodeFormat, BrowserMultiFormatReader } = window.ZXing;
-    const formatMap = { qr_code: BarcodeFormat.QR_CODE, ean_13: BarcodeFormat.EAN_13 };
-    const hints = new Map();
-    hints.set(DecodeHintType.POSSIBLE_FORMATS, formats.map((f) => formatMap[f]));
-    hints.set(DecodeHintType.TRY_HARDER, true);
-    const reader = new BrowserMultiFormatReader(hints);
-
-    const url = isBlob ? URL.createObjectURL(fileOrUrl) : fileOrUrl;
-    try {
-      const result = await reader.decodeFromImageUrl(url);
-      return result.getText();
-    } catch (e) {
-      return null; // no code found in the image — not an error condition
-    } finally {
-      if (isBlob) URL.revokeObjectURL(url);
-    }
-  }
-
-  return null;
-}
 
 export class CodeScanner {
   // formats: subset of ['qr_code', 'ean_13'] to detect. Defaults to both
