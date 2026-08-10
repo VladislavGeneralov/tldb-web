@@ -49,11 +49,24 @@ works too.)
   whatever low-res default the browser might otherwise pick — EAN-13's
   finer bar spacing needs more resolution than QR's built-in redundancy
   tolerates.
-- **`admin.html`** — stub admin page, linked from the small "ADMIN" link
-  above the logo. Gated by a plain client-side password prompt
-  (`js/admin.js`) — **not real security**, the password is a readable
-  string in a public repo, it only deters casual clicks. Currently just a
-  placeholder; see "Known limitations" below for the planned scope.
+- **`admin.html`** — new-record draft tool, linked from the small "ADMIN"
+  link above the logo. Gated by a plain client-side password prompt
+  (`js/admin.js`, password `TLDBadmin00`) — **not real security**, the
+  password is a readable string in a public repo, it only deters casual
+  clicks. The record form is always visible: **Scan QR** sets BOOK ID
+  (same `codeScan.js` decoder as the public SCAN button); ISBN capture
+  uses a live camera preview with a guide box + OCR (`Tesseract.js`, from
+  CDN) on just that cropped region — EAN-13 barcode decoding was tried
+  and abandoned for ISBN, see `js/isbn.js` and project notes for why — and
+  looks the ISBN up on Open Library to auto-fill title/author/publisher/
+  year, flagging a warning if the result looks transliterated/romanized
+  rather than native script (common gap in Open Library's source data for
+  Russian-group ISBNs). **Take Cover Photo** captures and downloads a
+  resized cover image named after the current BOOK ID. A ○/● checklist
+  tracks whether QR/ISBN have been scanned; **Approve** lists any columns
+  still blank as a reminder, then formats every field into a CSV row to
+  paste into `libraryDB.csv` by hand — nothing here saves anywhere, there's
+  no backend.
 
 ## Known limitations of this phase
 
@@ -68,16 +81,15 @@ works too.)
   the CSV rather than a hardcoded enum — a backend should validate against a
   canonical list on write.
 - ISBN column exists in the schema but is empty for every current book.
-- `admin.html` is an empty placeholder behind a fake password gate. Planned
-  (not built, needs a backend): scanning a QR there starts a **new**
-  record (unlike the public SCAN button, which only looks up existing
-  ones), and scanning an ISBN auto-fills that new record's title/author/
-  publisher/year from Open Library / Google Books (both confirmed to allow
-  direct client-side `fetch()`, no CORS issue) — with manual correction
-  where the source data doesn't fit. Real-world coverage is partial for
-  this catalog (English-language books matched in testing, Russian
-  editions and small art-press titles mostly didn't) — treat as a
-  draft-filling aid, not full automation.
+- `admin.html`'s record form doesn't save anywhere — it only formats a CSV
+  row to paste into `libraryDB.csv` and a cover photo to manually drop into
+  `data/covers/` by hand. Real needs a backend: a write API, real auth
+  (the password gate is client-side only, not real security), and actual
+  persistence. Open Library lookup coverage is partial for this catalog
+  (English-language books matched in testing, Russian editions and small
+  art-press titles mostly didn't, and some Russian-group ISBNs only have a
+  romanized/transliterated record with no Cyrillic edition at all) — treat
+  any auto-filled field as a draft to review, not ground truth.
 
 ## Deploying
 

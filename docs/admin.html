@@ -30,9 +30,9 @@
 
     <section id="admin-panel" class="admin-panel" hidden>
       <h2>Admin panel</h2>
-      <p>Scan QR + ISBN capture/auto-fill draft below is working (test).
-        Still planned: camera cover-photo capture, and actually saving
-        anything anywhere — that needs a backend, none of it persists yet.</p>
+      <p>Scan QR + ISBN capture/auto-fill + cover photo below is working
+        (test). Still missing: actually saving anything anywhere — that
+        needs a backend, none of this persists yet.</p>
 
       <div class="admin-isbn-test">
         <h3>ISBN capture (test)</h3>
@@ -86,6 +86,12 @@
         </div>
 
         <button id="admin-scan-qr-btn" type="button" class="file-btn">Scan QR (Book ID)</button>
+        <button id="admin-cover-open-camera-btn" type="button" class="file-btn">Take Cover Photo</button>
+
+        <div class="admin-cover-preview-wrap">
+          <img id="admin-cover-preview" class="admin-isbn-photo-preview" hidden alt="Book cover preview" />
+          <a id="admin-cover-download-link" class="file-btn" hidden download>Download cover photo</a>
+        </div>
 
         <div id="admin-record-fields" class="admin-record-fields"></div>
 
@@ -107,6 +113,18 @@
       <button id="admin-qr-close-btn" type="button" class="scan-close" title="Close">×</button>
       <video id="admin-qr-video" playsinline muted></video>
       <p id="admin-qr-status" class="scan-status">Point the camera at the book's QR code…</p>
+    </div>
+  </div>
+
+  <div id="admin-cover-camera-modal" class="scan-modal" hidden>
+    <div class="scan-modal-content">
+      <button id="admin-cover-camera-close-btn" type="button" class="scan-close" title="Close">×</button>
+      <video id="admin-cover-video" playsinline muted></video>
+      <p class="scan-status">Frame the whole book cover, then Capture.</p>
+      <div class="admin-isbn-camera-actions">
+        <button id="admin-cover-capture-btn" type="button">Capture</button>
+        <button id="admin-cover-camera-cancel-btn" type="button">Cancel</button>
+      </div>
     </div>
   </div>
 

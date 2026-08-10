@@ -6,6 +6,15 @@
   box-sizing: border-box;
 }
 
+/* The HTML `hidden` attribute keeps losing to author `display` rules on
+   the same element (bitten 3 times now: scan-modal, photo preview,
+   cover-download link) — author CSS always beats the UA [hidden]{display:
+   none} rule regardless of selector specificity/order. One blanket
+   !important fix instead of patching every element as it comes up. */
+[hidden] {
+  display: none !important;
+}
+
 body {
   margin: 0;
   height: 100vh;
@@ -454,7 +463,8 @@ button {
   color: #fff;
 }
 
-#scan-video {
+#scan-video,
+#admin-cover-video {
   width: 100%;
   border-radius: 0;
   background: #000;
@@ -693,8 +703,20 @@ button {
   color: #a8e6b0;
 }
 
-#admin-scan-qr-btn {
+#admin-scan-qr-btn,
+#admin-cover-open-camera-btn {
   margin-bottom: 16px;
+  margin-right: 8px;
+}
+
+.admin-cover-preview-wrap {
+  margin-bottom: 16px;
+}
+
+.admin-cover-preview-wrap .admin-isbn-photo-preview {
+  max-height: 200px;
+  margin-top: 0;
+  margin-bottom: 8px;
 }
 
 .admin-record-fields {

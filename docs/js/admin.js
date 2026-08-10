@@ -194,10 +194,28 @@ function initialDefaults() {
   return values;
 }
 
+// №, QR LINK and IMAGE LINK aren't shown as text fields: № was always
+// just row position, not real data; QR LINK isn't collectible without
+// the original desktop app's label printer; IMAGE LINK gets set
+// automatically once a cover photo is captured (see below) rather than
+// typed. They stay as hidden inputs so the CSV-building logic below
+// doesn't need special-casing per column — every column still has a
+// `record-<id>` element, just not all of them are visible.
+const NO_VISIBLE_FIELD = new Set(['num', 'qrLink', 'imageLink']);
+
 function renderRecordFields(values) {
   recordFields.innerHTML = '';
 
   for (const col of COLUMNS) {
+    if (NO_VISIBLE_FIELD.has(col.id)) {
+      const hidden = document.createElement('input');
+      hidden.type = 'hidden';
+      hidden.id = `record-${col.id}`;
+      hidden.value = values[col.id] || '';
+      recordFields.appendChild(hidden);
+      continue;
+    }
+
     const wrap = document.createElement('div');
     wrap.className = 'admin-record-field';
 
@@ -280,14 +298,43 @@ function setChecklist(el, done) {
   el.textContent = (done ? '● ' : '○ ') + el.textContent.slice(2);
 }
 
+// № is just row position (never filled here) and QR LINK isn't
+// collectible without the original label printer — don't nag about
+// those two, ever. Everything else is either required to approve at all,
+// or optional-but-confirm-if-blank.
+const SKIP_COMPLETENESS_CHECK = new Set(['num', 'qrLink']);
+const REQUIRED_TO_APPROVE = new Set(['bookId', 'name', 'authors', 'status', 'createdAt', 'updatedAt']);
+
 recordApproveBtn.addEventListener('click', () => {
-  const empty = COLUMNS.filter((col) => !getRecordField(col.id).trim()).map((col) => col.label);
-  if (empty.length > 0) {
-    showRecordNotice(`⚠ Still blank: ${empty.join(', ')}. Approving anyway just copies what's there.`);
-  } else {
-    recordWarning.hidden = true;
+  const missingRequired = COLUMNS.filter(
+    (col) => REQUIRED_TO_APPROVE.has(col.id) && !getRecordField(col.id).trim()
+  ).map((col) => col.label);
+
+  if (missingRequired.length > 0) {
+    showRecordNotice(`⚠ Required before approving: ${missingRequired.join(', ')}.`);
+    recordOutput.hidden = true;
+    return;
   }
 
+  const missingOptional = COLUMNS.filter(
+    (col) =>
+      !SKIP_COMPLETENESS_CHECK.has(col.id) &&
+      !REQUIRED_TO_APPROVE.has(col.id) &&
+      !getRecordField(col.id).trim()
+  ).map((col) => col.label);
+
+  if (missingOptional.length > 0) {
+    const proceed = window.confirm(
+      `Still blank: ${missingOptional.join(', ')}. Approve anyway?`
+    );
+    if (!proceed) {
+      showRecordNotice(`⚠ Still blank: ${missingOptional.join(', ')}. Fill these in, or click Approve again to confirm.`);
+      recordOutput.hidden = true;
+      return;
+    }
+  }
+
+  recordWarning.hidden = true;
   const row = COLUMNS.map((col) => csvField(getRecordField(col.id))).join(',');
   recordCsvArea.value = row;
   recordOutput.hidden = false;
@@ -340,6 +387,7 @@ async function openQrScanner() {
       closeQrScanner();
       setRecordField('bookId', rawValue);
       setChecklist(checklistQr, true);
+      syncCoverFilename();
     });
   } catch (e) {
     qrStatus.textContent = 'Could not access the camera. Check browser permissions.';
@@ -352,4 +400,93 @@ function closeQrScanner() {
     qrScanner = null;
   }
   qrModal.hidden = true;
+}
+
+// --- Take Cover Photo -----------------------------------------------------
+// No backend to upload to, so this can't save into data/covers/ directly —
+// browsers can't write to the site's own files. Instead: capture, resize
+// to the same convention the real catalog's covers already use (max
+// ~800px, JPEG ~82% — see project notes on compressing the 60 real
+// covers), offer it as a download, and set IMAGE LINK to the path it
+// *should* live at once someone drops the downloaded file into
+// data/covers/ by hand. The filename/path depend on BOOK ID, which might
+// not be scanned yet — kept in sync via syncCoverFilename(), called again
+// whenever BOOK ID changes after a cover's already been captured.
+
+const coverOpenBtn = document.getElementById('admin-cover-open-camera-btn');
+const coverModal = document.getElementById('admin-cover-camera-modal');
+const coverVideo = document.getElementById('admin-cover-video');
+const coverCaptureBtn = document.getElementById('admin-cover-capture-btn');
+const coverCancelBtn = document.getElementById('admin-cover-camera-cancel-btn');
+const coverCloseBtn = document.getElementById('admin-cover-camera-close-btn');
+const coverPreview = document.getElementById('admin-cover-preview');
+const coverDownloadLink = document.getElementById('admin-cover-download-link');
+
+const COVER_MAX_DIMENSION = 800;
+const COVER_JPEG_QUALITY = 0.82;
+
+let coverStream = null;
+let coverCaptured = false;
+
+coverOpenBtn.addEventListener('click', async () => {
+  try {
+    coverStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } },
+    });
+  } catch (e) {
+    showRecordNotice('Could not access the camera for the cover photo. Check browser permissions.');
+    return;
+  }
+  coverVideo.srcObject = coverStream;
+  await coverVideo.play();
+  coverModal.hidden = false;
+});
+
+coverCancelBtn.addEventListener('click', closeCoverCamera);
+coverCloseBtn.addEventListener('click', closeCoverCamera);
+
+function closeCoverCamera() {
+  if (coverStream) {
+    coverStream.getTracks().forEach((t) => t.stop());
+    coverStream = null;
+  }
+  coverModal.hidden = true;
+}
+
+coverCaptureBtn.addEventListener('click', () => {
+  const vw = coverVideo.videoWidth;
+  const vh = coverVideo.videoHeight;
+  const scale = Math.min(1, COVER_MAX_DIMENSION / Math.max(vw, vh));
+  const cw = Math.round(vw * scale);
+  const ch = Math.round(vh * scale);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = cw;
+  canvas.height = ch;
+  canvas.getContext('2d').drawImage(coverVideo, 0, 0, cw, ch);
+
+  closeCoverCamera();
+
+  canvas.toBlob((blob) => {
+    coverPreview.src = URL.createObjectURL(blob);
+    coverPreview.hidden = false;
+    coverDownloadLink.href = coverPreview.src;
+    coverDownloadLink.hidden = false;
+    coverCaptured = true;
+    syncCoverFilename();
+  }, 'image/jpeg', COVER_JPEG_QUALITY);
+});
+
+function syncCoverFilename() {
+  if (!coverCaptured) return;
+  const bookId = getRecordField('bookId').trim();
+  if (bookId) {
+    coverDownloadLink.download = `${bookId}.jpg`;
+    coverDownloadLink.textContent = `Download cover photo (${bookId}.jpg)`;
+    setRecordField('imageLink', `data/covers/${bookId}.jpg`);
+  } else {
+    coverDownloadLink.download = 'cover.jpg';
+    coverDownloadLink.textContent = 'Download cover photo (scan QR first to name it)';
+    setRecordField('imageLink', '');
+  }
 }
