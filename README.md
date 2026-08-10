@@ -28,20 +28,22 @@ works too.)
   LANGUAGE(S)/GENRE(S), single-select for CONDITION/STATUS), all live-updating.
 - Sortable results table with a visible copy-to-clipboard affordance per cell.
 - Book detail panel (click a row), with copy/open-link controls.
-- QR scanning via the device camera. Uses the native `BarcodeDetector` API
-  where the platform supports it (macOS/Android Chrome), and falls back to
-  the vendored `jsQR` decoder (`js/vendor/jsQR.js`) everywhere else — which
-  in practice means everywhere, since Windows/Linux desktop Chrome and Edge
-  don't implement `BarcodeDetector` at all. A "not supported" message only
-  shows if camera access itself fails or is denied.
-- **"ISBN (test)"** — experimental, separately-labeled ISBN-13 barcode
-  scanning via a vendored `ZXing-js` (`js/vendor/zxing.min.js`, see
-  `js/isbnScan.js`). Looks up existing catalog rows by their ISBN column
-  (currently empty for every book — see below) and filters the table to
-  matches, since one ISBN can correspond to multiple physical copies unlike
-  a QR/BOOK ID. This is a provisional parallel decoder, not yet merged with
-  the QR scanner or gated behind real admin auth (there's no backend for
-  that yet) — meant to be revisited once the future admin panel exists.
+- **SCAN** — one button, one camera view, reads either a book's TL QR code
+  or its ISBN-13 barcode (`js/codeScan.js`). Uses the native
+  `BarcodeDetector` API where the platform supports both formats at once
+  (macOS/Android Chrome), falling back to a vendored `ZXing-js`
+  (`js/vendor/zxing.min.js`) everywhere else — in practice everywhere,
+  since Windows/Linux desktop Chrome/Edge don't implement `BarcodeDetector`
+  at all. Both are read-only lookups against the loaded catalog, never
+  write anything: a QR match always identifies exactly one physical copy
+  and opens it directly; an ISBN identifies an edition, so a match filters
+  the table to every copy sharing it and only auto-opens the book card when
+  that's unambiguous (exactly one copy).
+- **`admin.html`** — stub admin page, linked from the small "ADMIN" link
+  above the logo. Gated by a plain client-side password prompt
+  (`js/admin.js`) — **not real security**, the password is a readable
+  string in a public repo, it only deters casual clicks. Currently just a
+  placeholder; see "Known limitations" below for the planned scope.
 
 ## Known limitations of this phase
 
@@ -56,12 +58,16 @@ works too.)
   the CSV rather than a hardcoded enum — a backend should validate against a
   canonical list on write.
 - ISBN column exists in the schema but is empty for every current book.
-  Planned admin workflow (not built): scan ISBN → auto-fill title/author/
+- `admin.html` is an empty placeholder behind a fake password gate. Planned
+  (not built, needs a backend): scanning a QR there starts a **new**
+  record (unlike the public SCAN button, which only looks up existing
+  ones), and scanning an ISBN auto-fills that new record's title/author/
   publisher/year from Open Library / Google Books (both confirmed to allow
-  direct client-side `fetch()`, no CORS issue) → scan/assign the TL QR code.
-  Real-world coverage is partial for this catalog (English-language books
-  matched in testing, Russian editions and small art-press titles mostly
-  didn't) — treat as a draft-filling aid, not full automation.
+  direct client-side `fetch()`, no CORS issue) — with manual correction
+  where the source data doesn't fit. Real-world coverage is partial for
+  this catalog (English-language books matched in testing, Russian
+  editions and small art-press titles mostly didn't) — treat as a
+  draft-filling aid, not full automation.
 
 ## Deploying
 

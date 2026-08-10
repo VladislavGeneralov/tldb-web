@@ -7,12 +7,14 @@
   <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
+  <div class="top-strip">
+    <a href="admin.html" class="admin-link">ADMIN</a>
+  </div>
   <header class="app-header">
     <img class="logo" src="data/logo.png" alt="Tselinny" />
     <h1>TLDB</h1>
     <div class="header-actions">
       <button id="clear-filters-btn" type="button">Clear filters</button>
-      <button id="isbn-scan-btn" type="button" class="test-btn" title="Experimental admin feature — not access-controlled yet">ISBN (test)</button>
       <button id="scan-btn" type="button">SCAN</button>
     </div>
   </header>
@@ -27,11 +29,10 @@
     <div class="scan-modal-content">
       <button id="scan-close-btn" type="button" class="scan-close" title="Close">×</button>
       <video id="scan-video" playsinline muted></video>
-      <p id="scan-status" class="scan-status">Point the camera at a book's QR code…</p>
+      <p id="scan-status" class="scan-status">Point the camera at a book's QR code or ISBN barcode…</p>
     </div>
   </div>
 
-  <script src="js/vendor/jsQR.js"></script>
   <script src="js/vendor/zxing.min.js"></script>
   <script type="module" src="js/main.js"></script>
 </body>

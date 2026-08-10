@@ -15,10 +15,17 @@ body {
   color: #f0f0f0;
   display: grid;
   grid-template-columns: 320px 1fr;
-  grid-template-rows: 64px 1fr;
+  grid-template-rows: auto 64px 1fr;
   grid-template-areas:
+    "topstrip topstrip"
     "header header"
     "filters table";
+}
+
+body.admin-body {
+  display: block;
+  height: auto;
+  min-height: 100vh;
 }
 
 /* Form controls don't inherit the page font by default in most browsers —
@@ -32,8 +39,9 @@ button {
 @media (max-width: 900px) {
   body {
     grid-template-columns: 1fr;
-    grid-template-rows: 64px auto 1fr;
+    grid-template-rows: auto 64px auto 1fr;
     grid-template-areas:
+      "topstrip"
       "header"
       "filters"
       "table";
@@ -47,6 +55,27 @@ button {
     width: 100%;
     right: -100%;
   }
+}
+
+/* Top strip (admin link) */
+
+.top-strip {
+  grid-area: topstrip;
+  background: #000;
+  padding: 4px 16px;
+  border-bottom: 1px solid #222;
+}
+
+.admin-link {
+  color: #666;
+  font-size: 11px;
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.admin-link:hover {
+  color: #f0f0f0;
 }
 
 /* Header */
@@ -462,4 +491,75 @@ button {
 .toast.visible {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
+}
+
+/* Admin page */
+
+.admin-main {
+  display: flex;
+  justify-content: center;
+  padding: 60px 16px;
+}
+
+.admin-gate form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 280px;
+}
+
+.admin-gate label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #999;
+}
+
+.admin-gate input {
+  background: #222;
+  border: 1px solid #444;
+  color: #f0f0f0;
+  padding: 8px;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.admin-gate button {
+  background: #000;
+  border: 1px solid #fff;
+  color: #f0f0f0;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.admin-gate button:hover {
+  background: #222;
+}
+
+.admin-gate-error {
+  color: #d67373;
+  font-size: 12px;
+  min-height: 14px;
+  margin: 0;
+}
+
+.admin-gate-note {
+  color: #666;
+  font-size: 11px;
+  margin: 8px 0 0;
+}
+
+.admin-panel {
+  width: 100%;
+  max-width: 600px;
+}
+
+.admin-panel h2 {
+  margin-top: 0;
+}
+
+.admin-panel p {
+  color: #ccc;
+  line-height: 1.5;
 }

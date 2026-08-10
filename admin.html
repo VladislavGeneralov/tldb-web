@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TLDB Admin — Tselinny Library Database</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body class="admin-body">
+  <div class="top-strip">
+    <a href="index.html" class="admin-link">← Catalog</a>
+  </div>
+  <header class="app-header">
+    <img class="logo" src="data/logo.png" alt="Tselinny" />
+    <h1>TLDB ADMIN</h1>
+  </header>
+
+  <main class="admin-main">
+    <section id="admin-gate" class="admin-gate">
+      <form id="admin-gate-form">
+        <label for="admin-gate-input">Admin password</label>
+        <input id="admin-gate-input" type="password" autocomplete="off" required />
+        <button type="submit">Unlock</button>
+        <p id="admin-gate-error" class="admin-gate-error"></p>
+        <p class="admin-gate-note">
+          Placeholder gate only — not real security (no backend yet).
+        </p>
+      </form>
+    </section>
+
+    <section id="admin-panel" class="admin-panel" hidden>
+      <h2>Admin panel</h2>
+      <p>Nothing here yet. Planned: scan a QR to start a new record, scan an
+        ISBN to auto-fill it from an open book database, mobile-friendly
+        entry with camera cover-photo capture. Needs a backend first.</p>
+    </section>
+  </main>
+
+  <script src="js/admin.js"></script>
+</body>
+</html>
