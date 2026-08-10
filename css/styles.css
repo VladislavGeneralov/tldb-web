@@ -103,6 +103,18 @@ button {
   background: #222;
 }
 
+.test-btn {
+  border-style: dashed !important;
+  color: #999 !important;
+  font-size: 11px !important;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.test-btn:hover {
+  color: #f0f0f0 !important;
+}
+
 /* Filters panel */
 
 .filters-panel {

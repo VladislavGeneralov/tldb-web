@@ -34,19 +34,34 @@ works too.)
   in practice means everywhere, since Windows/Linux desktop Chrome and Edge
   don't implement `BarcodeDetector` at all. A "not supported" message only
   shows if camera access itself fails or is denied.
+- **"ISBN (test)"** — experimental, separately-labeled ISBN-13 barcode
+  scanning via a vendored `ZXing-js` (`js/vendor/zxing.min.js`, see
+  `js/isbnScan.js`). Looks up existing catalog rows by their ISBN column
+  (currently empty for every book — see below) and filters the table to
+  matches, since one ISBN can correspond to multiple physical copies unlike
+  a QR/BOOK ID. This is a provisional parallel decoder, not yet merged with
+  the QR scanner or gated behind real admin auth (there's no backend for
+  that yet) — meant to be revisited once the future admin panel exists.
 
 ## Known limitations of this phase
 
 - No backend, database, or write-back — editing the catalog still means
   editing `data/libraryDB.csv` by hand and reloading.
-- Cover photos only exist locally under `data/covers/<BOOK ID>.jpg|png` for
-  the books that have one (currently 60 of ~700) — the rest show a "No
-  Image" placeholder. The CSV's own QR LINK / IMAGE LINK columns are still
-  local Windows paths from the original desktop app and won't resolve in a
+- Cover photos only exist locally under `data/covers/<BOOK ID>.jpg` for the
+  books that have one (currently 60 of ~700) — the rest show a "No Image"
+  placeholder. The CSV's own QR LINK / IMAGE LINK columns are still local
+  Windows paths from the original desktop app and won't resolve in a
   browser; they're shown as copyable reference text only.
 - STATUS/CONDITION dropdown options are derived from whatever is actually in
   the CSV rather than a hardcoded enum — a backend should validate against a
   canonical list on write.
+- ISBN column exists in the schema but is empty for every current book.
+  Planned admin workflow (not built): scan ISBN → auto-fill title/author/
+  publisher/year from Open Library / Google Books (both confirmed to allow
+  direct client-side `fetch()`, no CORS issue) → scan/assign the TL QR code.
+  Real-world coverage is partial for this catalog (English-language books
+  matched in testing, Russian editions and small art-press titles mostly
+  didn't) — treat as a draft-filling aid, not full automation.
 
 ## Deploying
 
