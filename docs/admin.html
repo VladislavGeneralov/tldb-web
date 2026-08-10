@@ -30,9 +30,10 @@
 
     <section id="admin-panel" class="admin-panel" hidden>
       <h2>Admin panel</h2>
-      <p>Nothing here yet. Planned: scan a QR to start a new record, scan an
-        ISBN to auto-fill it from an open book database, mobile-friendly
-        entry with camera cover-photo capture. Needs a backend first.</p>
+      <p>ISBN capture + auto-fill draft below is working (test). Still
+        planned: scanning a QR to start a record tied to a specific
+        physical copy, camera cover-photo capture, and actually saving
+        anything — all need a backend, none of it persists yet.</p>
 
       <div class="admin-isbn-test">
         <h3>ISBN capture (test)</h3>
@@ -70,6 +71,26 @@
         </div>
 
         <p id="admin-isbn-result" class="admin-isbn-result"></p>
+      </div>
+
+      <div id="admin-record-form" class="admin-record-form" hidden>
+        <h3>New record (draft)</h3>
+        <p class="admin-isbn-note">
+          Pre-filled from the ISBN lookup where found — review every field,
+          it's a starting point, not ground truth. Nothing here saves
+          anywhere yet (no backend); Approve just formats it as a CSV row
+          to copy into libraryDB.csv by hand.
+        </p>
+
+        <div id="admin-record-fields" class="admin-record-fields"></div>
+
+        <button id="admin-record-approve-btn" type="button">Approve</button>
+
+        <div id="admin-record-output" class="admin-record-output" hidden>
+          <label for="admin-record-csv">CSV row — copy into libraryDB.csv</label>
+          <textarea id="admin-record-csv" class="admin-record-csv" readonly rows="3"></textarea>
+          <button id="admin-record-copy-btn" type="button">Copy</button>
+        </div>
       </div>
     </section>
   </main>

@@ -7,6 +7,8 @@
 // notes on the future admin panel) and should replace this entirely.
 
 import { isValidIsbn13, extractIsbn13 } from './isbn.js';
+import { lookupIsbn } from './isbnLookup.js';
+import { COLUMNS } from './data.js';
 
 const ADMIN_PASSWORD = 'TLDBadmin00';
 const SESSION_KEY = 'tldb-admin-unlocked';
@@ -56,8 +58,8 @@ gateForm.addEventListener('submit', (e) => {
 // more involved to self-host, and this whole page is an experimental
 // admin-only test area already.
 //
-// No catalog lookup or auto-fill here — this only validates the ISBN-13
-// format/checksum, it doesn't save anything (there's no backend yet).
+// A validated ISBN (checksum-checked, from OCR or manual entry) triggers
+// the "New record draft" form further down — see handleValidIsbn below.
 
 const isbnResult = document.getElementById('admin-isbn-result');
 const isbnPhotoPreview = document.getElementById('admin-isbn-photo-preview');
@@ -128,9 +130,12 @@ captureBtn.addEventListener('click', async () => {
 
 isbnValidateBtn.addEventListener('click', () => {
   const digits = isbnInput.value.replace(/[^0-9]/g, '');
-  isbnResult.textContent = isValidIsbn13(digits)
-    ? `Valid ISBN-13: ${digits}`
-    : `Not a valid ISBN-13 (bad format or checksum): "${isbnInput.value}"`;
+  if (isValidIsbn13(digits)) {
+    isbnResult.textContent = `Valid ISBN-13: ${digits}`;
+    handleValidIsbn(digits);
+  } else {
+    isbnResult.textContent = `Not a valid ISBN-13 (bad format or checksum): "${isbnInput.value}"`;
+  }
 });
 
 async function runOcr(blob) {
@@ -144,10 +149,115 @@ async function runOcr(blob) {
     if (found) {
       isbnInput.value = found;
       isbnResult.textContent = `OCR found a valid ISBN: ${found}`;
+      handleValidIsbn(found);
     } else {
       isbnResult.textContent = `OCR read "${data.text.trim()}" — no valid ISBN in that. Read it off the preview and type it in below.`;
     }
   } catch (e) {
     isbnResult.textContent = `OCR failed (${e.message}) — type the ISBN in manually.`;
   }
+}
+
+// --- New record draft form -----------------------------------------------
+// Once we have a validated ISBN (from OCR or manual entry), look it up
+// and show every catalog column as an editable field, pre-filled where
+// the lookup had data. Nothing here writes to the real catalog — there's
+// no backend — so Approve just formats the current field values as a CSV
+// row the admin can paste into libraryDB.csv by hand.
+
+const recordForm = document.getElementById('admin-record-form');
+const recordFields = document.getElementById('admin-record-fields');
+const recordApproveBtn = document.getElementById('admin-record-approve-btn');
+const recordOutput = document.getElementById('admin-record-output');
+const recordCsvArea = document.getElementById('admin-record-csv');
+const recordCopyBtn = document.getElementById('admin-record-copy-btn');
+
+async function handleValidIsbn(isbn) {
+  recordForm.hidden = false;
+  recordOutput.hidden = true;
+  recordFields.innerHTML = '<p class="admin-isbn-note">Looking up ISBN on Open Library…</p>';
+
+  const found = await lookupIsbn(isbn).catch(() => null);
+  renderRecordFields(buildDefaults(isbn, found));
+}
+
+function todayFormatted() {
+  const d = new Date();
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`;
+}
+
+function buildDefaults(isbn, found) {
+  const today = todayFormatted();
+  return {
+    num: '',
+    bookId: '',
+    authors: found?.authors || '',
+    name: found?.title || '',
+    publisher: found?.publisher || '',
+    year: found?.year || '',
+    isbn,
+    languages: '',
+    genres: '',
+    condition: '',
+    status: 'Available',
+    createdAt: today,
+    updatedAt: today,
+    storageCell: '',
+    qrLink: '',
+    imageLink: '',
+  };
+}
+
+function renderRecordFields(values) {
+  recordFields.innerHTML = '';
+
+  for (const col of COLUMNS) {
+    const wrap = document.createElement('div');
+    wrap.className = 'admin-record-field';
+
+    const label = document.createElement('label');
+    label.textContent = col.label;
+    label.htmlFor = `record-${col.id}`;
+    wrap.appendChild(label);
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.id = `record-${col.id}`;
+    input.value = values[col.id] || '';
+
+    if (col.id === 'status') {
+      input.setAttribute('list', 'admin-record-status-options');
+      const datalist = document.createElement('datalist');
+      datalist.id = 'admin-record-status-options';
+      for (const opt of ['Available', 'Loaned', 'FAO', 'Discarded', 'Restoration']) {
+        const option = document.createElement('option');
+        option.value = opt;
+        datalist.appendChild(option);
+      }
+      wrap.appendChild(datalist);
+    }
+
+    wrap.appendChild(input);
+    recordFields.appendChild(wrap);
+  }
+}
+
+recordApproveBtn.addEventListener('click', () => {
+  const row = COLUMNS.map((col) => {
+    const input = document.getElementById(`record-${col.id}`);
+    return csvField(input ? input.value : '');
+  }).join(',');
+
+  recordCsvArea.value = row;
+  recordOutput.hidden = false;
+});
+
+recordCopyBtn.addEventListener('click', () => {
+  navigator.clipboard.writeText(recordCsvArea.value);
+});
+
+function csvField(value) {
+  if (/[",\n]/.test(value)) return '"' + value.replace(/"/g, '""') + '"';
+  return value;
 }

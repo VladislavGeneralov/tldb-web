@@ -667,6 +667,96 @@ button {
   background: #222;
 }
 
+.admin-record-form {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #333;
+  max-width: 480px;
+}
+
+.admin-record-form h3 {
+  margin: 0 0 8px;
+}
+
+.admin-record-fields {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 8px 10px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.admin-record-field {
+  display: contents;
+}
+
+.admin-record-field label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #999;
+}
+
+.admin-record-field input {
+  background: #222;
+  border: 1px solid #444;
+  color: #f0f0f0;
+  padding: 6px 8px;
+  font-size: 13px;
+  font-family: inherit;
+}
+
+#admin-record-approve-btn {
+  background: #000;
+  border: 1px solid #fff;
+  color: #f0f0f0;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+#admin-record-approve-btn:hover {
+  background: #222;
+}
+
+.admin-record-output {
+  margin-top: 16px;
+}
+
+.admin-record-output label {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #999;
+  margin-bottom: 6px;
+}
+
+.admin-record-csv {
+  width: 100%;
+  background: #222;
+  border: 1px solid #444;
+  color: #f0f0f0;
+  padding: 8px;
+  font-size: 12px;
+  font-family: "Courier New", monospace;
+  resize: vertical;
+  margin-bottom: 8px;
+}
+
+#admin-record-copy-btn {
+  background: #000;
+  border: 1px solid #fff;
+  color: #f0f0f0;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+#admin-record-copy-btn:hover {
+  background: #222;
+}
+
 .admin-isbn-entry {
   margin-top: 16px;
   display: flex;
