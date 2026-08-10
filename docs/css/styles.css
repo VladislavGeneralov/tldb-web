@@ -731,7 +731,7 @@ button {
   display: contents;
 }
 
-.admin-record-field label {
+.admin-record-field > label {
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -745,6 +745,98 @@ button {
   padding: 6px 8px;
   font-size: 13px;
   font-family: inherit;
+}
+
+.admin-record-input-row {
+  position: relative;
+  display: flex;
+  gap: 4px;
+}
+
+.admin-record-input-row input {
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-picker-btn {
+  background: #222;
+  border: 1px solid #444;
+  color: #ccc;
+  cursor: pointer;
+  padding: 0 8px;
+  font-size: 12px;
+}
+
+.admin-picker-btn:hover {
+  color: #fff;
+}
+
+.admin-picker-popup {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  margin-top: 2px;
+  background: #181818;
+  border: 1px solid #444;
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 6px;
+}
+
+.admin-picker-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  padding: 3px 2px;
+  cursor: pointer;
+}
+
+.admin-picker-empty {
+  color: #666;
+  font-size: 12px;
+  padding: 3px 2px 8px;
+}
+
+.admin-picker-add {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid #333;
+}
+
+.admin-picker-add input {
+  flex: 1;
+  min-width: 0;
+  background: #222;
+  border: 1px solid #444;
+  color: #f0f0f0;
+  padding: 4px 6px;
+  font-size: 12px;
+  font-family: inherit;
+}
+
+.admin-picker-add button,
+.admin-picker-done {
+  background: #000;
+  border: 1px solid #fff;
+  color: #f0f0f0;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.admin-picker-add button:hover,
+.admin-picker-done:hover {
+  background: #222;
+}
+
+.admin-picker-done {
+  width: 100%;
+  margin-top: 6px;
 }
 
 #admin-record-approve-btn {

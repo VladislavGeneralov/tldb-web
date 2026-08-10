@@ -8,7 +8,7 @@
 
 import { isValidIsbn13, extractIsbn13, guessIsbnRegion, looksTransliterated } from './isbn.js';
 import { lookupIsbn } from './isbnLookup.js';
-import { COLUMNS } from './data.js';
+import { COLUMNS, loadBooks, deriveFilterOptions } from './data.js';
 import { CodeScanner, validateTLId, isScanSupported } from './codeScan.js';
 
 const ADMIN_PASSWORD = 'TLDBadmin00';
@@ -203,6 +203,30 @@ function initialDefaults() {
 // `record-<id>` element, just not all of them are visible.
 const NO_VISIBLE_FIELD = new Set(['num', 'qrLink', 'imageLink']);
 
+// Existing-value pick lists for LANGUAGE(S)/GENRE(S)/PUBLISHER, offered as
+// popovers next to those fields (see attachPicker below). Loaded once from
+// the real catalog (read-only — this page never writes to it) and mutated
+// in place rather than reassigned, so a popover opened after loading
+// finishes, or after an "Add new", always sees the latest list. Declared
+// before renderRecordFields's first call below since attachPicker reads
+// from it immediately.
+const PICKER_OPTIONS = { languages: [], genres: [], publisher: [] };
+
+loadBooks().then((books) => {
+  const derived = deriveFilterOptions(books);
+  PICKER_OPTIONS.languages.push(...(derived.languages || []));
+  PICKER_OPTIONS.genres.push(...(derived.genres || []));
+
+  const publishers = new Set();
+  for (const b of books) {
+    const v = (b.publisher || '').trim();
+    if (v) publishers.add(v);
+  }
+  PICKER_OPTIONS.publisher.push(...[...publishers].sort((a, b) => a.localeCompare(b)));
+}).catch(() => {
+  // catalog failed to load — pickers just show only "Add new", still usable
+});
+
 function renderRecordFields(values) {
   recordFields.innerHTML = '';
 
@@ -241,7 +265,16 @@ function renderRecordFields(values) {
       wrap.appendChild(datalist);
     }
 
-    wrap.appendChild(input);
+    if (col.id === 'languages' || col.id === 'genres' || col.id === 'publisher') {
+      const row = document.createElement('div');
+      row.className = 'admin-record-input-row';
+      row.appendChild(input);
+      wrap.appendChild(row);
+      attachPicker(row, input, PICKER_OPTIONS[col.id], col.id !== 'publisher');
+    } else {
+      wrap.appendChild(input);
+    }
+
     recordFields.appendChild(wrap);
   }
 }
@@ -257,6 +290,116 @@ function getRecordField(id) {
 }
 
 renderRecordFields(initialDefaults());
+
+function attachPicker(wrap, input, options, multi) {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'admin-picker-btn';
+  btn.title = 'Pick from list';
+  btn.textContent = '▾';
+
+  const popup = document.createElement('div');
+  popup.className = 'admin-picker-popup';
+  popup.hidden = true;
+
+  function currentValues() {
+    return multi
+      ? input.value.split(';').map((s) => s.trim()).filter(Boolean)
+      : [input.value.trim()].filter(Boolean);
+  }
+
+  function renderList() {
+    popup.innerHTML = '';
+    const selected = currentValues();
+
+    if (options.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'admin-picker-empty';
+      empty.textContent = 'No existing values yet.';
+      popup.appendChild(empty);
+    }
+
+    for (const opt of options) {
+      const item = document.createElement('label');
+      item.className = 'admin-picker-item';
+
+      const control = document.createElement('input');
+      control.type = multi ? 'checkbox' : 'radio';
+      if (!multi) control.name = `picker-${input.id}`;
+      control.checked = selected.includes(opt);
+      control.addEventListener('change', () => {
+        if (multi) {
+          const set = new Set(currentValues());
+          if (control.checked) set.add(opt);
+          else set.delete(opt);
+          input.value = [...set].join('; ');
+        } else {
+          input.value = opt;
+          popup.hidden = true;
+        }
+      });
+
+      item.append(control, document.createTextNode(' ' + opt));
+      popup.appendChild(item);
+    }
+
+    const addRow = document.createElement('div');
+    addRow.className = 'admin-picker-add';
+    const addInput = document.createElement('input');
+    addInput.type = 'text';
+    addInput.placeholder = 'Add new…';
+    const addBtn = document.createElement('button');
+    addBtn.type = 'button';
+    addBtn.textContent = 'Add';
+
+    function addNew() {
+      const val = addInput.value.trim();
+      if (!val) return;
+      if (!options.includes(val)) {
+        options.push(val);
+        options.sort((a, b) => a.localeCompare(b));
+      }
+      if (multi) {
+        const set = new Set(currentValues());
+        set.add(val);
+        input.value = [...set].join('; ');
+      } else {
+        input.value = val;
+      }
+      addInput.value = '';
+      renderList();
+      if (!multi) popup.hidden = true;
+    }
+
+    addBtn.addEventListener('click', addNew);
+    addInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        addNew();
+      }
+    });
+
+    addRow.append(addInput, addBtn);
+    popup.appendChild(addRow);
+
+    if (multi) {
+      const doneBtn = document.createElement('button');
+      doneBtn.type = 'button';
+      doneBtn.className = 'admin-picker-done';
+      doneBtn.textContent = 'Done';
+      doneBtn.addEventListener('click', () => { popup.hidden = true; });
+      popup.appendChild(doneBtn);
+    }
+  }
+
+  btn.addEventListener('click', () => {
+    popup.hidden = !popup.hidden;
+    if (!popup.hidden) renderList();
+  });
+
+  wrap.appendChild(btn);
+  wrap.appendChild(popup);
+}
 
 async function handleValidIsbn(isbn) {
   setRecordField('isbn', isbn);
@@ -285,6 +428,8 @@ async function handleValidIsbn(isbn) {
       'script yourself before approving.'
     );
   }
+
+  tryFetchOpenLibraryCover(isbn);
 }
 
 function showRecordNotice(text) {
@@ -402,16 +547,17 @@ function closeQrScanner() {
   qrModal.hidden = true;
 }
 
-// --- Take Cover Photo -----------------------------------------------------
+// --- Cover photo: camera capture or auto-fetched from Open Library -------
 // No backend to upload to, so this can't save into data/covers/ directly —
-// browsers can't write to the site's own files. Instead: capture, resize
-// to the same convention the real catalog's covers already use (max
-// ~800px, JPEG ~82% — see project notes on compressing the 60 real
-// covers), offer it as a download, and set IMAGE LINK to the path it
-// *should* live at once someone drops the downloaded file into
-// data/covers/ by hand. The filename/path depend on BOOK ID, which might
-// not be scanned yet — kept in sync via syncCoverFilename(), called again
-// whenever BOOK ID changes after a cover's already been captured.
+// browsers can't write to the site's own files. Instead: get a cover from
+// either source, resize+compress it to the same convention the real
+// catalog's covers already use (max ~800px, JPEG ~82% — see project notes
+// on compressing the 60 real covers) via the shared resizeToCoverBlob, and
+// offer it as a download, and set IMAGE LINK to the path it *should* live
+// at once someone drops the downloaded file into data/covers/ by hand.
+// The filename/path depend on BOOK ID, which might not be scanned yet —
+// kept in sync via syncCoverFilename(), called again whenever BOOK ID
+// changes after a cover's already been set.
 
 const coverOpenBtn = document.getElementById('admin-cover-open-camera-btn');
 const coverModal = document.getElementById('admin-cover-camera-modal');
@@ -453,29 +599,61 @@ function closeCoverCamera() {
   coverModal.hidden = true;
 }
 
-coverCaptureBtn.addEventListener('click', () => {
-  const vw = coverVideo.videoWidth;
-  const vh = coverVideo.videoHeight;
-  const scale = Math.min(1, COVER_MAX_DIMENSION / Math.max(vw, vh));
-  const cw = Math.round(vw * scale);
-  const ch = Math.round(vh * scale);
+// Shared by both the camera capture and the Open Library auto-fetch below,
+// so *every* cover ends up the same resized/compressed size regardless of
+// where it came from — a source-camera photo can be many MB, a fetched
+// Open Library cover can be a multi-MB scan too.
+function resizeToCoverBlob(source, sw, sh) {
+  return new Promise((resolve) => {
+    const scale = Math.min(1, COVER_MAX_DIMENSION / Math.max(sw, sh));
+    const cw = Math.round(sw * scale);
+    const ch = Math.round(sh * scale);
+    const canvas = document.createElement('canvas');
+    canvas.width = cw;
+    canvas.height = ch;
+    canvas.getContext('2d').drawImage(source, 0, 0, cw, ch);
+    canvas.toBlob(resolve, 'image/jpeg', COVER_JPEG_QUALITY);
+  });
+}
 
-  const canvas = document.createElement('canvas');
-  canvas.width = cw;
-  canvas.height = ch;
-  canvas.getContext('2d').drawImage(coverVideo, 0, 0, cw, ch);
+function useCoverBlob(blob) {
+  coverPreview.src = URL.createObjectURL(blob);
+  coverPreview.hidden = false;
+  coverDownloadLink.href = coverPreview.src;
+  coverDownloadLink.hidden = false;
+  coverCaptured = true;
+  syncCoverFilename();
+}
 
+coverCaptureBtn.addEventListener('click', async () => {
+  const blob = await resizeToCoverBlob(coverVideo, coverVideo.videoWidth, coverVideo.videoHeight);
   closeCoverCamera();
-
-  canvas.toBlob((blob) => {
-    coverPreview.src = URL.createObjectURL(blob);
-    coverPreview.hidden = false;
-    coverDownloadLink.href = coverPreview.src;
-    coverDownloadLink.hidden = false;
-    coverCaptured = true;
-    syncCoverFilename();
-  }, 'image/jpeg', COVER_JPEG_QUALITY);
+  useCoverBlob(blob);
 });
+
+// Tries Open Library's cover-by-ISBN endpoint after a successful ISBN
+// lookup. When there's no real cover for an ISBN it doesn't 404 — it
+// returns HTTP 200 with a 1x1 placeholder pixel (confirmed by hand), so
+// "real cover" is detected by actual image dimensions, not response
+// status. Never overrides a photo the admin already took themselves —
+// their photo of the physical copy in hand is more authoritative than a
+// stock cover image for the edition. If this fails or finds nothing, the
+// admin can still always use Take Cover Photo — it's a bonus, not
+// required.
+async function tryFetchOpenLibraryCover(isbn) {
+  if (coverCaptured) return;
+  try {
+    const res = await fetch(`https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg`);
+    if (!res.ok) return;
+    const blob = await res.blob();
+    const bitmap = await createImageBitmap(blob);
+    if (bitmap.width <= 1 || bitmap.height <= 1) return; // the "no cover" placeholder
+    const resized = await resizeToCoverBlob(bitmap, bitmap.width, bitmap.height);
+    useCoverBlob(resized);
+  } catch (e) {
+    // network hiccup or decode failure — cover is optional, no user-facing error needed
+  }
+}
 
 function syncCoverFilename() {
   if (!coverCaptured) return;
