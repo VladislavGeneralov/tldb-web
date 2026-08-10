@@ -27,9 +27,12 @@ works too.)
   LANGUAGE(S)/GENRE(S), single-select for CONDITION/STATUS), all live-updating.
 - Sortable results table with a visible copy-to-clipboard affordance per cell.
 - Book detail panel (click a row), with copy/open-link controls.
-- QR scanning via the device camera, using the browser's native
-  `BarcodeDetector` API (Chrome/Edge). Unsupported browsers show a message
-  instead of failing silently.
+- QR scanning via the device camera. Uses the native `BarcodeDetector` API
+  where the platform supports it (macOS/Android Chrome), and falls back to
+  the vendored `jsQR` decoder (`js/vendor/jsQR.js`) everywhere else — which
+  in practice means everywhere, since Windows/Linux desktop Chrome and Edge
+  don't implement `BarcodeDetector` at all. A "not supported" message only
+  shows if camera access itself fails or is denied.
 
 ## Known limitations of this phase
 
