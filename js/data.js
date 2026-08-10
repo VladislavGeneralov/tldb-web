@@ -109,6 +109,16 @@ export function deriveFilterOptions(books) {
   return options;
 }
 
+// Cover photos are stored locally under data/covers/<BOOK ID>.<ext> — keyed
+// by BOOK ID rather than trusting the CSV's IMAGE LINK column, which holds
+// an absolute Windows path from the original desktop app that can't resolve
+// in a browser. Source files come in either .jpg or .png; callers should
+// try each candidate in order and fall back to a placeholder if both 404.
+export function coverImageCandidates(bookId) {
+  if (!bookId) return [];
+  return [`data/covers/${bookId}.jpg`, `data/covers/${bookId}.png`];
+}
+
 export function shortenLink(full) {
   if (!full || full.length <= 12) return full || '';
   return `${full.slice(0, 5)}...${full.slice(-5)}`;

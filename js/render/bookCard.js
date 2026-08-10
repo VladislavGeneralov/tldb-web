@@ -1,6 +1,6 @@
 // TLDB Web — renders the book detail slide-over panel.
 
-import { COLUMNS, shortenLink } from '../data.js';
+import { COLUMNS, shortenLink, coverImageCandidates } from '../data.js';
 import { copyToClipboard } from './table.js';
 
 export function renderBookCard(container, book) {
@@ -24,14 +24,21 @@ export function renderBookCard(container, book) {
 
   const imgWrap = document.createElement('div');
   imgWrap.className = 'book-card-image';
-  if (book.imageLink) {
+  const candidates = coverImageCandidates(book.bookId);
+  if (candidates.length > 0) {
     const img = document.createElement('img');
-    img.src = book.imageLink;
     img.alt = book.name || 'Book cover';
-    img.addEventListener('error', () => {
-      imgWrap.innerHTML = '<div class="no-image">No Image</div>';
-    });
+    let next = 0;
+    const tryNextCandidate = () => {
+      if (next >= candidates.length) {
+        imgWrap.innerHTML = '<div class="no-image">No Image</div>';
+        return;
+      }
+      img.src = candidates[next++];
+    };
+    img.addEventListener('error', tryNextCandidate);
     imgWrap.appendChild(img);
+    tryNextCandidate();
   } else {
     imgWrap.innerHTML = '<div class="no-image">No Image</div>';
   }

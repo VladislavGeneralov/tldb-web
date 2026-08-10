@@ -1,8 +1,9 @@
 # TLDB Web — Phase 1 (interface only)
 
-Web interface for the Tselinny Library Database. Currently runs entirely on
-fixture data (`data/libraryDB.csv`, copied from the original Processing
-desktop app) — there is no backend yet, this is a static site.
+Web interface for the Tselinny Library Database. Runs on the real catalog
+export (`data/libraryDB.csv`, ~700 books) with cover photos where available
+under `data/covers/` — there is no backend yet, this is a static site, so
+editing the catalog still means editing the CSV by hand.
 
 ## Running locally
 
@@ -38,12 +39,14 @@ works too.)
 
 - No backend, database, or write-back — editing the catalog still means
   editing `data/libraryDB.csv` by hand and reloading.
-- QR LINK / IMAGE LINK values in the fixture are local Windows file paths
-  from the original desktop app and won't resolve in a browser. Real image
-  hosting is a follow-up once there's a funded host for it.
+- Cover photos only exist locally under `data/covers/<BOOK ID>.jpg|png` for
+  the books that have one (currently 60 of ~700) — the rest show a "No
+  Image" placeholder. The CSV's own QR LINK / IMAGE LINK columns are still
+  local Windows paths from the original desktop app and won't resolve in a
+  browser; they're shown as copyable reference text only.
 - STATUS/CONDITION dropdown options are derived from whatever is actually in
-  the CSV (including any inconsistent/typo'd values) rather than a hardcoded
-  enum — a backend should validate against a canonical list on write.
+  the CSV rather than a hardcoded enum — a backend should validate against a
+  canonical list on write.
 
 ## Deploying
 
