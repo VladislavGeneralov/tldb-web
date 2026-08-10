@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TLDB — Tselinny Library Database</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header class="app-header">
+    <img class="logo" src="data/logo.png" alt="Tselinny" />
+    <h1>TLDB</h1>
+    <div class="header-actions">
+      <button id="clear-filters-btn" type="button">Clear filters</button>
+      <button id="scan-btn" type="button">SCAN</button>
+    </div>
+  </header>
+
+  <aside id="filters-panel" class="filters-panel"></aside>
+
+  <main id="table-panel" class="table-panel"></main>
+
+  <section id="book-card" class="book-card" aria-hidden="true"></section>
+
+  <div id="scan-modal" class="scan-modal" hidden>
+    <div class="scan-modal-content">
+      <button id="scan-close-btn" type="button" class="scan-close" title="Close">×</button>
+      <video id="scan-video" playsinline muted></video>
+      <p id="scan-status" class="scan-status">Point the camera at a book's QR code…</p>
+    </div>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
