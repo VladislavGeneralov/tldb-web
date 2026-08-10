@@ -52,13 +52,25 @@ const isbnScanVideo = document.getElementById('admin-scan-video');
 const isbnScanStatus = document.getElementById('admin-scan-status');
 
 let isbnScanner = null;
+let lastScanText = '';
 
 isbnScanBtn.addEventListener('click', openIsbnScanner);
 isbnScanCloseBtn.addEventListener('click', closeIsbnScanner);
 
+// Shows the camera's *actual* stream resolution once it's live — the only
+// way to confirm the HD constraint in codeScan.js actually took effect on
+// a given phone/browser, instead of guessing from symptoms alone.
+isbnScanVideo.addEventListener('loadedmetadata', () => {
+  const res = `${isbnScanVideo.videoWidth}x${isbnScanVideo.videoHeight}`;
+  isbnScanStatus.textContent = lastScanText
+    ? `${lastScanText} (camera: ${res})`
+    : `Camera stream: ${res}. Point at an ISBN barcode…`;
+});
+
 async function openIsbnScanner() {
   isbnScanModal.hidden = false;
-  isbnScanStatus.textContent = 'Point the camera at an ISBN barcode…';
+  lastScanText = '';
+  isbnScanStatus.textContent = 'Requesting camera…';
 
   if (!isScanSupported()) {
     isbnScanStatus.textContent = "Scanning isn't supported in this browser — try Chrome or Edge.";
@@ -69,7 +81,9 @@ async function openIsbnScanner() {
   try {
     await isbnScanner.start((rawValue) => {
       isbnResult.textContent = `Last scanned: ${rawValue}`;
-      isbnScanStatus.textContent = `Scanned ${rawValue} — keep scanning or close.`;
+      lastScanText = `Scanned ${rawValue} — keep scanning or close.`;
+      const res = `${isbnScanVideo.videoWidth}x${isbnScanVideo.videoHeight}`;
+      isbnScanStatus.textContent = `${lastScanText} (camera: ${res})`;
     });
   } catch (e) {
     isbnScanStatus.textContent = 'Could not access the camera. Check browser permissions.';

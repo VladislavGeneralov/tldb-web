@@ -68,6 +68,11 @@ export class CodeScanner {
       const formatMap = { qr_code: BarcodeFormat.QR_CODE, ean_13: BarcodeFormat.EAN_13 };
       const hints = new Map();
       hints.set(DecodeHintType.POSSIBLE_FORMATS, formats.map((f) => formatMap[f]));
+      // Makes ZXing try harder per frame (more rotations/regions) at the
+      // cost of speed — worth it for continuous scanning where accuracy
+      // was the actual bottleneck, not frame rate. Was only ever set in
+      // ad-hoc test scripts before, never in this shipped code.
+      hints.set(DecodeHintType.TRY_HARDER, true);
       this.zxingReader = new BrowserMultiFormatReader(hints);
     }
   }
