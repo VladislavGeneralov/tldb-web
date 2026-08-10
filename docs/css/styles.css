@@ -615,7 +615,10 @@ button {
 
 .admin-isbn-camera-frame {
   position: relative;
-  width: 100%;
+  width: 50%;
+  min-width: 220px;
+  max-width: 260px;
+  margin: 0 auto;
   background: #000;
   overflow: hidden;
 }
@@ -625,15 +628,16 @@ button {
   display: block;
 }
 
-/* Guide box: a wide short band sized for "ISBN xxx-x-xxxxxxx-x-x" — the
+/* Guide box: sized for just the "ISBN xxx-x-xxxxxxx-x-x" text line — the
    dimmed area outside it is just a visual aid, the actual crop uses these
-   same fractions against the video's native resolution (see admin.js). */
+   same fractions against the video's native resolution (see admin.js).
+   Keep these numbers in sync with the GUIDE constant in admin.js. */
 .admin-isbn-guide {
   position: absolute;
-  left: 7.5%;
-  right: 7.5%;
-  top: 42%;
-  bottom: 42%;
+  left: 29%;
+  right: 29%;
+  top: 46%;
+  bottom: 46%;
   border: 2px solid #fff;
   box-shadow: 0 0 0 2000px rgba(0, 0, 0, 0.55);
   pointer-events: none;

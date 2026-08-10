@@ -71,10 +71,14 @@ const captureBtn = document.getElementById('admin-isbn-capture-btn');
 const cameraCancelBtn = document.getElementById('admin-isbn-camera-cancel-btn');
 
 // Fractions of the video's *native* resolution matching the guide box's
-// CSS position (see .admin-isbn-guide) — video is displayed at
+// CSS position (see .admin-isbn-guide — must stay in sync with these
+// numbers, they're duplicated there since CSS positions the visible box
+// and this defines the actual crop). Video is displayed at
 // width:100%/height:auto so it keeps its native aspect ratio, meaning
 // these fractions map directly to pixels in the captured frame.
-const GUIDE = { x: 0.075, y: 0.42, w: 0.85, h: 0.16 };
+// Smaller box == less of the frame the text needs to fill == the phone
+// can stay farther back instead of being held right up against the page.
+const GUIDE = { x: 0.29, y: 0.46, w: 0.42, h: 0.08 };
 const CAPTURE_UPSCALE = 2; // matched what fixed a misread digit in testing
 
 let stream = null;
