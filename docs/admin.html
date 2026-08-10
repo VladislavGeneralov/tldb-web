@@ -35,7 +35,11 @@
         entry with camera cover-photo capture. Needs a backend first.</p>
 
       <div class="admin-isbn-test">
-        <button id="admin-scan-isbn-btn" type="button">SCAN ISBN</button>
+        <button id="admin-scan-isbn-btn" type="button">SCAN ISBN (video)</button>
+        <label class="file-btn">
+          SCAN ISBN (photo)
+          <input id="admin-isbn-photo-input" type="file" accept="image/*" capture="environment" hidden />
+        </label>
         <p id="admin-isbn-result" class="admin-isbn-result"></p>
       </div>
     </section>

@@ -6,7 +6,7 @@
 // protect anything. Real access control needs a backend (see project
 // notes on the future admin panel) and should replace this entirely.
 
-import { CodeScanner, isScanSupported } from './codeScan.js';
+import { CodeScanner, isScanSupported, decodeStillImage } from './codeScan.js';
 
 const ADMIN_PASSWORD = 'TLDBadmin00';
 const SESSION_KEY = 'tldb-admin-unlocked';
@@ -97,3 +97,28 @@ function closeIsbnScanner() {
   }
   isbnScanModal.hidden = true;
 }
+
+// --- SCAN ISBN (photo) --------------------------------------------------
+// Same raw decode-and-display idea, but decodes a single native camera
+// photo capture instead of sampling live video frames — a real photo is
+// typically full sensor resolution with proper focus-lock, unlike any one
+// frame pulled out of a getUserMedia preview stream.
+
+const isbnPhotoInput = document.getElementById('admin-isbn-photo-input');
+
+isbnPhotoInput.addEventListener('change', async () => {
+  const file = isbnPhotoInput.files[0];
+  if (!file) return;
+
+  isbnResult.textContent = `Decoding photo (${(file.size / 1024).toFixed(0)}KB)…`;
+  try {
+    const rawValue = await decodeStillImage(file, ['ean_13']);
+    isbnResult.textContent = rawValue
+      ? `Photo scan: ${rawValue}`
+      : 'Photo scan: no barcode found in that photo.';
+  } catch (e) {
+    isbnResult.textContent = `Photo scan failed: ${e.message}`;
+  }
+
+  isbnPhotoInput.value = ''; // allow re-selecting the same file again
+});
