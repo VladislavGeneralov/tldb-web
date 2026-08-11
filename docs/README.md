@@ -6,10 +6,13 @@ site lives here rather than at the repo root, leaving the parent Windows
 folder (`Desktop/TLDB_web/`) free to hold just launcher shortcuts (open
 the live catalog, open admin, open the CSV table).
 
-Web interface for the Tselinny Library Database. Runs on the real catalog
-export (`data/libraryDB.csv`, ~700 books) with cover photos where available
-under `data/covers/` — there is no backend yet, this is a static site, so
-editing the catalog still means editing the CSV by hand.
+Web interface for the Tselinny Library Database. The catalog (~700 books)
+lives in a Cloudflare D1 database and is served through the `tldb-admin-auth`
+Cloudflare Worker (`worker/`) — this static site fetches it live from there.
+`data/libraryDB.csv` still ships in the repo as a point-in-time snapshot/
+backup, but is no longer what the running site reads. Cover photos are
+still local files under `data/covers/` (see "Known limitations" — no image
+upload backend yet).
 
 ## Running locally
 
@@ -62,35 +65,44 @@ works too.)
   year, flagging a warning if the result looks transliterated/romanized
   rather than native script (common gap in Open Library's source data for
   Russian-group ISBNs). **Take Cover Photo** captures and downloads a
-  resized cover image named after the current BOOK ID. A ○/● checklist
-  tracks whether QR/ISBN have been scanned; **Approve** lists any columns
-  still blank as a reminder, then formats every field into a CSV row to
-  paste into `libraryDB.csv` by hand — nothing here saves anywhere, there's
-  no backend.
+  resized cover image named after the current BOOK ID (still a manual
+  download + drop into `data/covers/`, not an upload — see limitations). A
+  ○/● checklist tracks whether QR/ISBN have been scanned; **Approve**
+  checks required fields, then saves the record straight to the catalog
+  (`POST /books` on the Worker, upserted into D1 by BOOK ID) — the public
+  catalog picks it up on next load. A CSV row is still shown below as a
+  manual-paste backup, but it's no longer needed for the save to take effect.
 
 ## Known limitations of this phase
 
-- No backend, database, or write-back — editing the catalog still means
-  editing `data/libraryDB.csv` by hand and reloading.
-- Cover photos only exist locally under `data/covers/<BOOK ID>.jpg` for the
-  books that have one (currently 60 of ~700) — the rest show a "No Image"
-  placeholder. The CSV's own QR LINK / IMAGE LINK columns are still local
-  Windows paths from the original desktop app and won't resolve in a
-  browser; they're shown as copyable reference text only.
+- **Cover photo upload isn't backed by real storage.** Cloudflare R2 (object
+  storage) needs to be enabled through the Cloudflare dashboard first, which
+  requires adding a payment method even though usage stays within the free
+  tier — deliberately not done yet. So **Take Cover Photo** still only
+  downloads a resized image; someone has to manually drop it into
+  `data/covers/<BOOK ID>.jpg` and commit it, same as the original 60 covers.
+- **Auth is still a single shared password**, not per-user accounts — same
+  password gates both reading the admin page and writing new/edited books
+  (`worker/src/index.js` checks it server-side, but there's no session/token
+  system, no audit trail of who saved what).
 - STATUS/CONDITION dropdown options are derived from whatever is actually in
-  the CSV rather than a hardcoded enum — a backend should validate against a
-  canonical list on write.
-- ISBN column exists in the schema but is empty for every current book.
-- `admin.html`'s record form doesn't save anywhere — it only formats a CSV
-  row to paste into `libraryDB.csv` and a cover photo to manually drop into
-  `data/covers/` by hand. Real needs a backend: a write API, real auth
-  (the password gate is client-side only, not real security), and actual
-  persistence. Open Library lookup coverage is partial for this catalog
-  (English-language books matched in testing, Russian editions and small
-  art-press titles mostly didn't, and some Russian-group ISBNs only have a
-  romanized/transliterated record with no Cyrillic edition at all) — treat
-  any auto-filled field as a draft to review, not ground truth.
+  the data rather than a hardcoded enum — the write API doesn't validate
+  against a canonical list either.
+- ISBN column exists in the schema but is empty for most current books.
+- Open Library lookup coverage is partial for this catalog (English-language
+  books matched in testing, Russian editions and small art-press titles
+  mostly didn't, and some Russian-group ISBNs only have a romanized/
+  transliterated record with no Cyrillic edition at all) — treat any
+  auto-filled field as a draft to review, not ground truth.
+- No version history/rollback on the D1 data — an overwrite (same BOOK ID)
+  replaces the row with no undo beyond the CSV snapshot already in git.
 
 ## Deploying
 
-Static files only — this folder can be pushed as-is to GitHub Pages.
+The static site (this folder) deploys as-is to GitHub Pages. The backend
+(`worker/`) deploys separately to Cloudflare:
+
+```
+cd worker
+npx wrangler deploy
+```

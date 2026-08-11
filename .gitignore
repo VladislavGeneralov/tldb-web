@@ -4,3 +4,6 @@
 !.dev.vars.example
 .env*
 !.env.example
+
+# one-time generated D1 migration dump (data already in docs/data/libraryDB.csv)
+worker/migrate_data.sql

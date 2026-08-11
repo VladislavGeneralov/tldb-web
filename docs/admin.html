@@ -9,6 +9,7 @@
 <body class="admin-body">
   <div class="top-strip">
     <a href="index.html" class="admin-link">← Catalog</a>
+    <span id="admin-token-countdown" class="admin-token-countdown"></span>
   </div>
   <header class="app-header">
     <img class="logo" src="data/logo.png" alt="Tselinny" />
@@ -99,8 +100,10 @@
 
         <p id="admin-record-warning" class="admin-isbn-warning" hidden></p>
 
+        <p id="admin-record-save-status" class="admin-record-save-status" hidden></p>
+
         <div id="admin-record-output" class="admin-record-output" hidden>
-          <label for="admin-record-csv">CSV row — copy into libraryDB.csv</label>
+          <label for="admin-record-csv">CSV row (backup copy, not needed for saving)</label>
           <textarea id="admin-record-csv" class="admin-record-csv" readonly rows="3"></textarea>
           <button id="admin-record-copy-btn" type="button">Copy</button>
         </div>

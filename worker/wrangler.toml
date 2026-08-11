@@ -5,3 +5,18 @@ compatibility_date = "2026-08-11"
 # ADMIN_PASSWORD is a secret, not a var — set it with:
 #   npx wrangler secret put ADMIN_PASSWORD
 # It never lives in this file or the repo.
+
+[[d1_databases]]
+binding = "DB"
+database_name = "tldb-db"
+database_id = "00fe1e64-3457-4a76-b2f6-94e02c1f12de"
+
+# Weekly D1 -> CSV -> GitHub commit, an independent backup outside
+# Cloudflare (see worker/src/index.js's scheduled() handler). Monday
+# 03:00 UTC — low-traffic time, arbitrary otherwise.
+[triggers]
+crons = ["0 3 * * 1"]
+
+# GITHUB_TOKEN is a secret, not a var — set it with:
+#   npx wrangler secret put GITHUB_TOKEN
+# Fine-grained PAT, Contents: Read and write, scoped to this one repo only.

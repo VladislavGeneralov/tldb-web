@@ -1,6 +1,9 @@
-// TLDB Web — data layer: CSV loading/parsing + column schema.
-// This is the single place that knows the data source is a CSV file today.
-// Swapping to a real backend later means changing only loadBooks().
+// TLDB Web — data layer: catalog loading (Cloudflare Worker + D1) + column
+// schema. This is the single place that knows where book data comes from —
+// originally a static CSV, now the tldb-admin-auth Worker's /books endpoint
+// (see worker/src/index.js), which is the live source of truth. The CSV
+// file (data/libraryDB.csv) stays in the repo as a point-in-time snapshot
+// but is no longer read by the running site.
 
 export const COLUMNS = [
   { id: 'num', label: '№', kind: 'text' },
@@ -21,68 +24,17 @@ export const COLUMNS = [
   { id: 'imageLink', label: 'IMAGE LINK', kind: 'text', isLink: true },
 ];
 
-const CSV_PATH = 'data/libraryDB.csv';
+export const BOOKS_API_URL = 'https://tldb-admin-auth.ptntonesix.workers.dev/books';
 
 export async function loadBooks() {
-  const res = await fetch(CSV_PATH);
-  if (!res.ok) throw new Error(`Failed to load ${CSV_PATH}: ${res.status}`);
-  const text = await res.text();
-  const rows = parseCSV(text);
-  if (rows.length === 0) return [];
-
-  const header = rows[0];
-  checkHeaderShape(header);
-
-  return rows.slice(1).map((row) => {
+  const res = await fetch(BOOKS_API_URL);
+  if (!res.ok) throw new Error(`Failed to load books: ${res.status}`);
+  const data = await res.json();
+  return (data.books || []).map((row) => {
     const book = {};
-    COLUMNS.forEach((col, i) => {
-      book[col.id] = (row[i] ?? '').trim();
-    });
+    for (const col of COLUMNS) book[col.id] = (row[col.id] ?? '').trim();
     return book;
   });
-}
-
-function checkHeaderShape(header) {
-  const expected = COLUMNS.map((c) => c.label);
-  const mismatch = expected.some((label, i) => (header[i] || '').trim() !== label);
-  if (mismatch) {
-    console.warn(
-      'libraryDB.csv header does not match the expected column order. ' +
-      'Expected:', expected, 'Got:', header
-    );
-  }
-}
-
-// Minimal RFC4180-ish CSV parser: handles quoted fields (embedded commas,
-// newlines, escaped "" quotes) as well as plain comma-separated fields.
-function parseCSV(text) {
-  const rows = [];
-  let row = [];
-  let field = '';
-  let inQuotes = false;
-
-  for (let i = 0; i < text.length; i++) {
-    const c = text[i];
-
-    if (inQuotes) {
-      if (c === '"') {
-        if (text[i + 1] === '"') { field += '"'; i++; }
-        else inQuotes = false;
-      } else {
-        field += c;
-      }
-      continue;
-    }
-
-    if (c === '"') { inQuotes = true; continue; }
-    if (c === ',') { row.push(field); field = ''; continue; }
-    if (c === '\r') continue;
-    if (c === '\n') { row.push(field); rows.push(row); row = []; field = ''; continue; }
-    field += c;
-  }
-  if (field.length > 0 || row.length > 0) { row.push(field); rows.push(row); }
-
-  return rows.filter((r) => r.length > 1 || (r.length === 1 && r[0] !== ''));
 }
 
 export function splitMulti(value) {

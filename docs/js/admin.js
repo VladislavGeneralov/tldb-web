@@ -9,11 +9,37 @@
 
 import { isValidIsbn13, extractIsbn13, guessIsbnRegion, looksTransliterated } from './isbn.js';
 import { lookupIsbn } from './isbnLookup.js';
-import { COLUMNS, loadBooks, deriveFilterOptions } from './data.js';
+import { COLUMNS, loadBooks, deriveFilterOptions, BOOKS_API_URL } from './data.js';
 import { CodeScanner, validateTLId, isScanSupported } from './codeScan.js';
 
 const AUTH_ENDPOINT = 'https://tldb-admin-auth.ptntonesix.workers.dev/check-password';
 const SESSION_KEY = 'tldb-admin-unlocked';
+const SESSION_PWD_KEY = 'tldb-admin-pwd';
+
+// The GitHub PAT backing the weekly D1->CSV backup (worker/src/index.js's
+// scheduled() handler) expires on this date — fine-grained PATs can't be
+// set to never expire in a way we chose here. Not a secret, just a
+// reminder date, so it's fine as a plain constant. When it expires, the
+// weekly backup silently starts failing (GitHub API returns 401) until a
+// new token is generated and set via `wrangler secret put GITHUB_TOKEN`.
+const GITHUB_TOKEN_EXPIRES = new Date('2026-11-09');
+
+renderTokenCountdown();
+
+function renderTokenCountdown() {
+  const el = document.getElementById('admin-token-countdown');
+  if (!el) return;
+  const daysLeft = Math.ceil((GITHUB_TOKEN_EXPIRES - new Date()) / (1000 * 60 * 60 * 24));
+  el.textContent = `GitHub token: ${daysLeft}d left`;
+  el.classList.toggle('warn', daysLeft <= 30 && daysLeft > 7);
+  el.classList.toggle('critical', daysLeft <= 7);
+}
+
+// Kept in memory only (not persisted anywhere) once the gate accepts it, so
+// Approve can authenticate its save call without asking the admin to type
+// the password a second time. There's no separate session/token system —
+// same shared-password model as the gate itself.
+let adminPassword = '';
 
 const gate = document.getElementById('admin-gate');
 const gateForm = document.getElementById('admin-gate-form');
@@ -28,6 +54,7 @@ function unlock() {
 }
 
 if (sessionStorage.getItem(SESSION_KEY) === '1') {
+  adminPassword = sessionStorage.getItem(SESSION_PWD_KEY) || '';
   unlock();
 }
 
@@ -43,7 +70,9 @@ gateForm.addEventListener('submit', async (e) => {
     });
     const data = await res.json();
     if (data.ok) {
+      adminPassword = gateInput.value;
       sessionStorage.setItem(SESSION_KEY, '1');
+      sessionStorage.setItem(SESSION_PWD_KEY, adminPassword);
       unlock();
     } else {
       gateError.textContent = 'Incorrect password.';
@@ -179,10 +208,10 @@ async function runOcr(blob) {
 // Always visible, empty, ready to fill by hand from the start. Scanning a
 // QR sets BOOK ID; scanning/typing an ISBN looks it up and sets the
 // bibliographic fields — either order, independently, neither one wipes
-// what the other already filled in. Nothing here writes to the real
-// catalog — there's no backend — so Approve formats the current field
-// values as a CSV row to paste into libraryDB.csv by hand, after
-// reminding about any columns still left blank (both scans are meant to
+// what the other already filled in. Approve saves the record to the real
+// catalog (POST /books on the Worker, upserted into D1 by BOOK ID) and
+// still shows a CSV row as a manual-paste backup, after reminding about
+// any columns still left blank (both scans are meant to
 // be done, not just one).
 
 const recordFields = document.getElementById('admin-record-fields');
@@ -472,7 +501,7 @@ function setChecklist(el, done) {
 const SKIP_COMPLETENESS_CHECK = new Set(['num', 'qrLink']);
 const REQUIRED_TO_APPROVE = new Set(['bookId', 'name', 'authors', 'status', 'createdAt', 'updatedAt']);
 
-recordApproveBtn.addEventListener('click', () => {
+recordApproveBtn.addEventListener('click', async () => {
   const missingRequired = COLUMNS.filter(
     (col) => REQUIRED_TO_APPROVE.has(col.id) && !getRecordField(col.id).trim()
   ).map((col) => col.label);
@@ -505,7 +534,37 @@ recordApproveBtn.addEventListener('click', () => {
   const row = COLUMNS.map((col) => csvField(getRecordField(col.id))).join(',');
   recordCsvArea.value = row;
   recordOutput.hidden = false;
+
+  const book = {};
+  for (const col of COLUMNS) book[col.id] = getRecordField(col.id);
+
+  recordApproveBtn.disabled = true;
+  showSaveStatus('Saving…', 'pending');
+  try {
+    const res = await fetch(BOOKS_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: adminPassword, book }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      showSaveStatus(`✓ Saved ${book.bookId} to the catalog.`, 'success');
+    } else {
+      showSaveStatus(`⚠ Save failed: ${data.error || res.status}`, 'error');
+    }
+  } catch {
+    showSaveStatus('⚠ Save failed: could not reach the server. The CSV row below is still available as a backup.', 'error');
+  } finally {
+    recordApproveBtn.disabled = false;
+  }
 });
+
+function showSaveStatus(text, kind) {
+  const saveStatus = document.getElementById('admin-record-save-status');
+  saveStatus.textContent = text;
+  saveStatus.hidden = false;
+  saveStatus.className = `admin-record-save-status ${kind}`;
+}
 
 recordCopyBtn.addEventListener('click', () => {
   navigator.clipboard.writeText(recordCsvArea.value);
