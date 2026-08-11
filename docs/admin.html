@@ -31,9 +31,10 @@
 
     <section id="admin-panel" class="admin-panel" hidden>
       <h2>Admin panel</h2>
-      <p>Scan QR + ISBN capture/auto-fill + cover photo below is working
-        (test). Still missing: actually saving anything anywhere — that
-        needs a backend, none of this persists yet.</p>
+      <p>Scan QR + ISBN capture/auto-fill below saves the record for real
+        (see Approve at the bottom). Cover photos still have to be
+        downloaded and dropped into <code>data/covers/</code> by hand —
+        no image upload backend yet.</p>
 
       <div class="admin-isbn-test">
         <h3>ISBN capture (test)</h3>
@@ -76,9 +77,10 @@
       <div id="admin-record-form" class="admin-record-form">
         <h3>New record (draft)</h3>
         <p class="admin-isbn-note">
-          Scan QR for BOOK ID and scan/type the ISBN — either order. Nothing
-          here saves anywhere yet (no backend); Approve just formats the
-          fields as a CSV row to copy into libraryDB.csv by hand.
+          Scan QR for BOOK ID and scan/type the ISBN — either order. Approve
+          saves the record to the catalog for real; if the BOOK ID already
+          exists, its current data loads into the form first so Approve
+          updates it instead of overwriting it blind.
         </p>
 
         <div class="admin-record-checklist">
