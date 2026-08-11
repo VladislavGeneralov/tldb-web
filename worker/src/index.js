@@ -48,6 +48,13 @@ const GITHUB_REPO = 'tldb-web';
 const GITHUB_CSV_PATH = 'docs/data/libraryDB.csv';
 const GITHUB_BRANCH = 'master';
 
+// Shared budget across every password-protected route (not per-route) —
+// an attacker splitting attempts across /check-password, POST /books and
+// /backup-now shouldn't get a bigger effective allowance than someone
+// hammering just one of them.
+const RATE_LIMIT_MAX = 5;
+const RATE_LIMIT_WINDOW_SECONDS = 60;
+
 export default {
   async fetch(request, env) {
     if (request.method === 'OPTIONS') {
@@ -55,6 +62,17 @@ export default {
     }
 
     const url = new URL(request.url);
+    const isPasswordRoute =
+      (url.pathname === '/check-password' && request.method === 'POST') ||
+      (url.pathname === '/books' && request.method === 'POST') ||
+      (url.pathname === '/backup-now' && request.method === 'POST');
+
+    if (isPasswordRoute && !(await checkRateLimit(request, env))) {
+      return withCors(jsonResponse(
+        { ok: false, error: 'Too many attempts — try again in a minute.' },
+        429
+      ));
+    }
 
     if (url.pathname === '/check-password' && request.method === 'POST') {
       return withCors(await handleCheckPassword(request, env));
@@ -231,6 +249,30 @@ function base64DecodeUtf8(b64) {
 function csvField(value) {
   if (/[",\n]/.test(value)) return '"' + value.replace(/"/g, '""') + '"';
   return value;
+}
+
+// Fixed-window limiter (5 requests/60s per IP) backed by Workers KV, gating
+// every password-protected route. Best-effort, not airtight — KV writes
+// are eventually consistent across Cloudflare's edge, so a request racing
+// in from two nearby PoPs at the exact same instant could both read the
+// same pre-increment count. That's an acceptable gap for what this is
+// actually defending against (a script hammering the password), not a
+// hard security boundary.
+async function checkRateLimit(request, env) {
+  const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+  const window = Math.floor(Date.now() / (RATE_LIMIT_WINDOW_SECONDS * 1000));
+  const key = `rl:${ip}:${window}`;
+
+  const current = parseInt((await env.RATE_LIMIT.get(key)) || '0', 10);
+  if (current >= RATE_LIMIT_MAX) return false;
+
+  // TTL is longer than the window itself just so the key reliably expires
+  // instead of relying on us to ever clean it up — the fixed window
+  // (Date.now() bucketing above) is what actually enforces the reset time.
+  await env.RATE_LIMIT.put(key, String(current + 1), {
+    expirationTtl: RATE_LIMIT_WINDOW_SECONDS * 2,
+  });
+  return true;
 }
 
 function jsonResponse(data, status) {

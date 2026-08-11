@@ -11,6 +11,13 @@ binding = "DB"
 database_name = "tldb-db"
 database_id = "00fe1e64-3457-4a76-b2f6-94e02c1f12de"
 
+# Rate limiting for password-protected routes (/check-password, POST
+# /books, /backup-now) — 5 attempts/minute per IP, see checkRateLimit in
+# src/index.js.
+[[kv_namespaces]]
+binding = "RATE_LIMIT"
+id = "9594ebf6f4c4462c835fd9ac9d2cb300"
+
 # Weekly D1 -> CSV -> GitHub commit, an independent backup outside
 # Cloudflare (see worker/src/index.js's scheduled() handler). Monday
 # 03:00 UTC — low-traffic time, arbitrary otherwise.

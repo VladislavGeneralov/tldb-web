@@ -74,6 +74,12 @@ gateForm.addEventListener('submit', async (e) => {
       sessionStorage.setItem(SESSION_KEY, '1');
       sessionStorage.setItem(SESSION_PWD_KEY, adminPassword);
       unlock();
+    } else if (res.status === 429) {
+      // Rate-limited (5 attempts/minute across all password routes, see
+      // worker/src/index.js) — distinct from a wrong password so the admin
+      // isn't left thinking they mistyped it when they're actually just
+      // locked out for the rest of the minute.
+      gateError.textContent = data.error || 'Too many attempts — wait a minute and try again.';
     } else {
       gateError.textContent = 'Incorrect password.';
       gateInput.value = '';
@@ -265,6 +271,13 @@ const PICKER_OPTIONS = { languages: [], genres: [], publisher: [] };
 // blank draft; this is what stops that.
 let CATALOG_BOOKS = [];
 
+// Snapshot of the real record checkBookIdForExisting last matched, used by
+// Approve to show a before/after diff instead of saving blind. Cleared
+// whenever the current BOOK ID no longer matches that snapshot (typed over,
+// or a fresh scan resolves to something else) so a stale diff can never be
+// shown against the wrong book.
+let existingRecordSnapshot = null;
+
 loadBooks().then((books) => {
   CATALOG_BOOKS = books;
 
@@ -290,7 +303,11 @@ loadBooks().then((books) => {
 // PICKER_OPTIONS above.
 function checkBookIdForExisting(bookId) {
   const existing = CATALOG_BOOKS.find((b) => b.bookId === bookId);
-  if (!existing) return;
+  if (!existing) {
+    existingRecordSnapshot = null;
+    return;
+  }
+  existingRecordSnapshot = { ...existing };
 
   for (const col of COLUMNS) setRecordField(col.id, existing[col.id] || '');
   // Only reflects "this data is already known", not "a scan happened" —
@@ -585,6 +602,28 @@ recordApproveBtn.addEventListener('click', async () => {
   const book = {};
   for (const col of COLUMNS) book[col.id] = getRecordField(col.id);
 
+  // Overwriting an existing record (not creating a new one): show exactly
+  // what will change before touching the real catalog, rather than trusting
+  // that the admin remembers everything they edited. New records (no
+  // matching snapshot) skip straight to saving — there's nothing to diff
+  // against.
+  if (existingRecordSnapshot && existingRecordSnapshot.bookId === book.bookId) {
+    const changedCols = COLUMNS.filter(
+      (col) => (existingRecordSnapshot[col.id] || '') !== (book[col.id] || '')
+    );
+    if (changedCols.length > 0) {
+      const confirmed = await showDiffConfirm(changedCols, existingRecordSnapshot, book);
+      if (!confirmed) {
+        showSaveStatus('Save cancelled — back to editing.', 'pending');
+        return;
+      }
+    }
+  }
+
+  await saveRecord(book);
+});
+
+async function saveRecord(book) {
   recordApproveBtn.disabled = true;
   showSaveStatus('Saving…', 'pending');
   try {
@@ -596,6 +635,7 @@ recordApproveBtn.addEventListener('click', async () => {
     const data = await res.json();
     if (data.ok) {
       showSaveStatus(`✓ Saved ${book.bookId} to the catalog.`, 'success');
+      existingRecordSnapshot = { ...book };
     } else {
       showSaveStatus(`⚠ Save failed: ${data.error || res.status}`, 'error');
     }
@@ -604,7 +644,53 @@ recordApproveBtn.addEventListener('click', async () => {
   } finally {
     recordApproveBtn.disabled = false;
   }
-});
+}
+
+// Before/after confirmation for overwriting an existing record — resolves
+// true if the admin clicks "Save changes", false on "Back to editing"
+// (including closing via the × button, which also counts as back-out).
+const diffModal = document.getElementById('admin-diff-modal');
+const diffList = document.getElementById('admin-diff-list');
+const diffBackBtn = document.getElementById('admin-diff-back-btn');
+const diffConfirmBtn = document.getElementById('admin-diff-confirm-btn');
+
+function showDiffConfirm(changedCols, oldBook, newBook) {
+  diffList.innerHTML = '';
+  for (const col of changedCols) {
+    const rowEl = document.createElement('div');
+    rowEl.className = 'admin-diff-row';
+
+    const label = document.createElement('div');
+    label.className = 'admin-diff-label';
+    label.textContent = col.label;
+
+    const oldVal = document.createElement('div');
+    oldVal.className = 'admin-diff-old';
+    oldVal.textContent = oldBook[col.id] || '—';
+
+    const newVal = document.createElement('div');
+    newVal.className = 'admin-diff-new';
+    newVal.textContent = newBook[col.id] || '—';
+
+    rowEl.append(label, oldVal, newVal);
+    diffList.appendChild(rowEl);
+  }
+
+  diffModal.hidden = false;
+
+  return new Promise((resolve) => {
+    const cleanup = (result) => {
+      diffModal.hidden = true;
+      diffBackBtn.removeEventListener('click', onBack);
+      diffConfirmBtn.removeEventListener('click', onConfirm);
+      resolve(result);
+    };
+    const onBack = () => cleanup(false);
+    const onConfirm = () => cleanup(true);
+    diffBackBtn.addEventListener('click', onBack);
+    diffConfirmBtn.addEventListener('click', onConfirm);
+  });
+}
 
 function showSaveStatus(text, kind) {
   const saveStatus = document.getElementById('admin-record-save-status');

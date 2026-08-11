@@ -121,6 +121,23 @@
     </div>
   </div>
 
+  <div id="admin-diff-modal" class="scan-modal" hidden>
+    <div class="scan-modal-content admin-diff-modal-content">
+      <h3>Confirm changes to existing record</h3>
+      <p class="admin-isbn-note">This BOOK ID already exists — review what will change before saving.</p>
+      <div class="admin-diff-header">
+        <div class="admin-diff-label"></div>
+        <div class="admin-diff-old">Was</div>
+        <div class="admin-diff-new">Will be</div>
+      </div>
+      <div id="admin-diff-list" class="admin-diff-list"></div>
+      <div class="admin-diff-actions">
+        <button id="admin-diff-back-btn" type="button" class="file-btn">Back to editing</button>
+        <button id="admin-diff-confirm-btn" type="button">Save changes</button>
+      </div>
+    </div>
+  </div>
+
   <div id="admin-cover-camera-modal" class="scan-modal" hidden>
     <div class="scan-modal-content">
       <button id="admin-cover-camera-close-btn" type="button" class="scan-close" title="Close">×</button>

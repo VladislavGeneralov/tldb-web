@@ -1,5 +1,65 @@
 :root {
   color-scheme: dark;
+
+  /* Surfaces */
+  --bg: #1e1e1e;
+  --black: #000;
+  --white: #fff;
+  --surface-header: #111;
+  --surface-deep: #181818;
+  --surface-1: #222;
+  --surface-2: #2a2a2a;
+  --surface-hover: #26262a;
+  --surface-selected: #24344d;
+
+  /* Borders */
+  --border: #333;
+  --border-soft: #262626;
+  --border-strong: #444;
+
+  /* Text */
+  --text-primary: #f0f0f0;
+  --text-soft: #ccc;
+  --text-soft-2: #ddd;
+  --text-muted: #999;
+  --text-faint: #666;
+  --text-dim: #888;
+  --text-danger: #d67373;
+
+  /* Focus ring */
+  --accent-focus: #3a63b5;
+
+  /* Book-status badges */
+  --status-available-bg: #1e5c2f;
+  --status-available-fg: #a8e6b0;
+  --status-loaned-bg: #5c4a1e;
+  --status-loaned-fg: #e6d3a8;
+  --status-fao-bg: #3a3a5c;
+  --status-fao-fg: #c3c3f0;
+  --status-discarded-bg: #5c1e1e;
+  --status-discarded-fg: #e6a8a8;
+  --status-restoration-bg: #5c3a1e;
+  --status-restoration-fg: #e6c0a8;
+
+  /* Notice banners (warning/success/error) */
+  --notice-warn-bg: #3a2c10;
+  --notice-warn-border: #7a5a1e;
+  --notice-warn-fg: #e6c675;
+  --notice-success-bg: #16321f;
+  --notice-success-border: #2e6b45;
+  --notice-success-fg: #7fd99a;
+  --notice-error-bg: #3a1f1f;
+  --notice-error-border: #7a3a3a;
+  --notice-error-fg: #e69595;
+
+  /* Record diff (admin approve confirmation) */
+  --diff-old: #ff6b6b;
+  --diff-new: #4caf50;
+
+  /* Overlays */
+  --overlay-heavy: rgba(0, 0, 0, 0.75);
+  --overlay-guide: rgba(0, 0, 0, 0.55);
+  --shadow-soft: rgba(0, 0, 0, 0.4);
 }
 
 * {
@@ -20,8 +80,8 @@ body {
   height: 100vh;
   font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
   font-size: 14px;
-  background: #1e1e1e;
-  color: #f0f0f0;
+  background: var(--bg);
+  color: var(--text-primary);
   display: grid;
   grid-template-columns: 320px 1fr;
   grid-template-rows: auto 64px 1fr;
@@ -58,7 +118,7 @@ button {
   .filters-panel {
     max-height: 260px;
     border-right: none;
-    border-bottom: 1px solid #333;
+    border-bottom: 1px solid var(--border);
   }
   .book-card {
     width: 100%;
@@ -70,16 +130,16 @@ button {
 
 .top-strip {
   grid-area: topstrip;
-  background: #000;
+  background: var(--black);
   padding: 4px 16px;
-  border-bottom: 1px solid #222;
+  border-bottom: 1px solid var(--surface-1);
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
 .admin-link {
-  color: #666;
+  color: var(--text-faint);
   font-size: 11px;
   text-decoration: none;
   text-transform: uppercase;
@@ -87,21 +147,21 @@ button {
 }
 
 .admin-link:hover {
-  color: #f0f0f0;
+  color: var(--text-primary);
 }
 
 .admin-token-countdown {
   font-size: 11px;
   letter-spacing: 0.03em;
-  color: #666;
+  color: var(--text-faint);
 }
 
 .admin-token-countdown.warn {
-  color: #e6c675;
+  color: var(--notice-warn-fg);
 }
 
 .admin-token-countdown.critical {
-  color: #d67373;
+  color: var(--text-danger);
 }
 
 /* Header */
@@ -112,8 +172,8 @@ button {
   align-items: center;
   gap: 16px;
   padding: 0 16px;
-  background: #111;
-  border-bottom: 1px solid #333;
+  background: var(--surface-header);
+  border-bottom: 1px solid var(--border);
 }
 
 .app-header .logo {
@@ -127,7 +187,7 @@ button {
   margin: 0 auto 0 0;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: #f0f0f0;
+  color: var(--text-primary);
 }
 
 .header-actions {
@@ -136,9 +196,9 @@ button {
 }
 
 .header-actions button {
-  background: #2a2a2a;
-  border: 1px solid #444;
-  color: #f0f0f0;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  color: var(--text-primary);
   padding: 8px 14px;
   border-radius: 0;
   cursor: pointer;
@@ -146,28 +206,28 @@ button {
 }
 
 .header-actions button:hover {
-  background: #333;
+  background: var(--border);
 }
 
 #scan-btn {
-  background: #000;
-  border-color: #fff;
+  background: var(--black);
+  border-color: var(--white);
 }
 
 #scan-btn:hover {
-  background: #222;
+  background: var(--surface-1);
 }
 
 .test-btn {
   border-style: dashed !important;
-  color: #999 !important;
+  color: var(--text-muted) !important;
   font-size: 11px !important;
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
 
 .test-btn:hover {
-  color: #f0f0f0 !important;
+  color: var(--text-primary) !important;
 }
 
 /* Filters panel */
@@ -176,8 +236,8 @@ button {
   grid-area: filters;
   overflow-y: auto;
   padding: 16px;
-  border-right: 1px solid #333;
-  background: #181818;
+  border-right: 1px solid var(--border);
+  background: var(--surface-deep);
 }
 
 .filter-field {
@@ -191,15 +251,15 @@ button {
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: #999;
+  color: var(--text-muted);
   display: block;
 }
 
 .filter-field input[type="text"],
 .filter-field select {
-  background: #222;
-  border: 1px solid #444;
-  color: #f0f0f0;
+  background: var(--surface-1);
+  border: 1px solid var(--border-strong);
+  color: var(--text-primary);
   padding: 6px 8px;
   border-radius: 0;
   font-size: 13px;
@@ -208,7 +268,7 @@ button {
 
 .filter-field input[type="text"]:focus,
 .filter-field select:focus {
-  outline: 2px solid #3a63b5;
+  outline: 2px solid var(--accent-focus);
   outline-offset: -1px;
 }
 
@@ -218,8 +278,8 @@ button {
   gap: 3px;
   max-height: 140px;
   overflow-y: auto;
-  background: #222;
-  border: 1px solid #444;
+  background: var(--surface-1);
+  border: 1px solid var(--border-strong);
   border-radius: 0;
   padding: 6px 8px;
 }
@@ -241,7 +301,7 @@ button {
 }
 
 .multiselect-empty {
-  color: #666;
+  color: var(--text-faint);
   font-size: 12px;
 }
 
@@ -261,7 +321,7 @@ button {
 
 .results-table th,
 .results-table td {
-  border: 1px solid #333;
+  border: 1px solid var(--border);
   padding: 6px 8px;
   font-size: 13px;
   text-align: left;
@@ -274,7 +334,7 @@ button {
   cursor: pointer;
   position: sticky;
   top: 0;
-  background: #222;
+  background: var(--surface-1);
   user-select: none;
   white-space: nowrap;
 }
@@ -292,11 +352,11 @@ button {
 }
 
 .results-table tbody tr:hover {
-  background: #26262a;
+  background: var(--surface-hover);
 }
 
 .results-table tr.selected {
-  background: #24344d;
+  background: var(--surface-selected);
 }
 
 .results-table td span {
@@ -305,7 +365,7 @@ button {
 
 .no-results {
   text-align: center;
-  color: #d67373;
+  color: var(--text-danger);
   padding: 24px !important;
 }
 
@@ -313,7 +373,7 @@ button {
 .open-btn {
   background: none;
   border: none;
-  color: #888;
+  color: var(--text-dim);
   cursor: pointer;
   margin-left: 6px;
   font-size: 12px;
@@ -323,7 +383,7 @@ button {
 
 .copy-btn:hover,
 .open-btn:hover {
-  color: #fff;
+  color: var(--white);
 }
 
 /* Book detail card */
@@ -334,12 +394,12 @@ button {
   right: -420px;
   width: 400px;
   height: calc(100vh - 64px);
-  background: #181818;
-  border-left: 1px solid #333;
+  background: var(--surface-deep);
+  border-left: 1px solid var(--border);
   padding: 20px;
   overflow-y: auto;
   transition: right 0.2s ease;
-  box-shadow: -4px 0 12px rgba(0, 0, 0, 0.4);
+  box-shadow: -4px 0 12px var(--shadow-soft);
   z-index: 50;
 }
 
@@ -353,20 +413,20 @@ button {
   right: 12px;
   background: none;
   border: none;
-  color: #ccc;
+  color: var(--text-soft);
   font-size: 22px;
   cursor: pointer;
   line-height: 1;
 }
 
 .book-card-close:hover {
-  color: #fff;
+  color: var(--white);
 }
 
 .book-card-image {
   width: 100%;
   height: 200px;
-  background: #222;
+  background: var(--surface-1);
   border-radius: 0;
   overflow: hidden;
   margin-bottom: 12px;
@@ -383,7 +443,7 @@ button {
 }
 
 .no-image {
-  color: #666;
+  color: var(--text-faint);
   font-size: 13px;
 }
 
@@ -399,33 +459,33 @@ button {
   border-radius: 0;
   font-size: 12px;
   font-weight: 600;
-  background: #333;
-  color: #ddd;
+  background: var(--border);
+  color: var(--text-soft-2);
 }
 
 .badge.status-available {
-  background: #1e5c2f;
-  color: #a8e6b0;
+  background: var(--status-available-bg);
+  color: var(--status-available-fg);
 }
 
 .badge.status-loaned {
-  background: #5c4a1e;
-  color: #e6d3a8;
+  background: var(--status-loaned-bg);
+  color: var(--status-loaned-fg);
 }
 
 .badge.status-fao {
-  background: #3a3a5c;
-  color: #c3c3f0;
+  background: var(--status-fao-bg);
+  color: var(--status-fao-fg);
 }
 
 .badge.status-discarded {
-  background: #5c1e1e;
-  color: #e6a8a8;
+  background: var(--status-discarded-bg);
+  color: var(--status-discarded-fg);
 }
 
 .badge.status-restoration {
-  background: #5c3a1e;
-  color: #e6c0a8;
+  background: var(--status-restoration-bg);
+  color: var(--status-restoration-fg);
 }
 
 .book-card-fields {
@@ -437,7 +497,7 @@ button {
 }
 
 .book-card-fields dt {
-  color: #999;
+  color: var(--text-muted);
 }
 
 .book-card-fields dd {
@@ -453,7 +513,7 @@ button {
 .scan-modal {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.75);
+  background: var(--overlay-heavy);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -461,8 +521,8 @@ button {
 }
 
 .scan-modal-content {
-  background: #181818;
-  border: 1px solid #333;
+  background: var(--surface-deep);
+  border: 1px solid var(--border);
   border-radius: 0;
   padding: 20px;
   position: relative;
@@ -475,21 +535,21 @@ button {
   right: 8px;
   background: none;
   border: none;
-  color: #ccc;
+  color: var(--text-soft);
   font-size: 24px;
   cursor: pointer;
   line-height: 1;
 }
 
 .scan-close:hover {
-  color: #fff;
+  color: var(--white);
 }
 
 #scan-video,
 #admin-cover-video {
   width: 100%;
   border-radius: 0;
-  background: #000;
+  background: var(--black);
   aspect-ratio: 4 / 3;
   object-fit: cover;
 }
@@ -497,7 +557,7 @@ button {
 .scan-status {
   text-align: center;
   margin: 12px 0 0;
-  color: #ddd;
+  color: var(--text-soft-2);
   font-size: 14px;
 }
 
@@ -508,15 +568,15 @@ button {
   bottom: 20px;
   left: 50%;
   transform: translateX(-50%) translateY(20px);
-  background: #222;
-  color: #fff;
+  background: var(--surface-1);
+  color: var(--white);
   padding: 8px 16px;
   border-radius: 0;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.2s, transform 0.2s;
   font-size: 13px;
-  border: 1px solid #444;
+  border: 1px solid var(--border-strong);
   z-index: 200;
 }
 
@@ -544,40 +604,40 @@ button {
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: #999;
+  color: var(--text-muted);
 }
 
 .admin-gate input {
-  background: #222;
-  border: 1px solid #444;
-  color: #f0f0f0;
+  background: var(--surface-1);
+  border: 1px solid var(--border-strong);
+  color: var(--text-primary);
   padding: 8px;
   font-size: 14px;
   font-family: inherit;
 }
 
 .admin-gate button {
-  background: #000;
-  border: 1px solid #fff;
-  color: #f0f0f0;
+  background: var(--black);
+  border: 1px solid var(--white);
+  color: var(--text-primary);
   padding: 8px 14px;
   cursor: pointer;
   font-size: 13px;
 }
 
 .admin-gate button:hover {
-  background: #222;
+  background: var(--surface-1);
 }
 
 .admin-gate-error {
-  color: #d67373;
+  color: var(--text-danger);
   font-size: 12px;
   min-height: 14px;
   margin: 0;
 }
 
 .admin-gate-note {
-  color: #666;
+  color: var(--text-faint);
   font-size: 11px;
   margin: 8px 0 0;
 }
@@ -592,14 +652,14 @@ button {
 }
 
 .admin-panel p {
-  color: #ccc;
+  color: var(--text-soft);
   line-height: 1.5;
 }
 
 .admin-isbn-test {
   margin-top: 24px;
   padding-top: 20px;
-  border-top: 1px solid #333;
+  border-top: 1px solid var(--border);
   max-width: 420px;
 }
 
@@ -608,7 +668,7 @@ button {
 }
 
 .admin-isbn-note {
-  color: #999;
+  color: var(--text-muted);
   font-size: 12px;
   line-height: 1.5;
   margin: 0 0 14px;
@@ -616,16 +676,16 @@ button {
 
 .file-btn {
   display: inline-block;
-  background: #000;
-  border: 1px solid #fff;
-  color: #f0f0f0;
+  background: var(--black);
+  border: 1px solid var(--white);
+  color: var(--text-primary);
   padding: 8px 14px;
   cursor: pointer;
   font-size: 13px;
 }
 
 .file-btn:hover {
-  background: #222;
+  background: var(--surface-1);
 }
 
 .admin-isbn-photo-preview {
@@ -633,7 +693,7 @@ button {
   width: 100%;
   max-height: 260px;
   object-fit: contain;
-  background: #000;
+  background: var(--black);
   margin-top: 12px;
 }
 
@@ -647,7 +707,7 @@ button {
   min-width: 220px;
   max-width: 260px;
   margin: 0 auto;
-  background: #000;
+  background: var(--black);
   overflow: hidden;
 }
 
@@ -666,13 +726,13 @@ button {
   right: 29%;
   top: 46%;
   bottom: 46%;
-  border: 2px solid #fff;
-  box-shadow: 0 0 0 2000px rgba(0, 0, 0, 0.55);
+  border: 2px solid var(--white);
+  box-shadow: 0 0 0 2000px var(--overlay-guide);
   pointer-events: none;
 }
 
 .admin-isbn-guide-hint {
-  color: #999;
+  color: var(--text-muted);
   font-size: 12px;
   margin: 8px 0;
 }
@@ -683,22 +743,22 @@ button {
 }
 
 .admin-isbn-camera-actions button {
-  background: #000;
-  border: 1px solid #fff;
-  color: #f0f0f0;
+  background: var(--black);
+  border: 1px solid var(--white);
+  color: var(--text-primary);
   padding: 8px 14px;
   cursor: pointer;
   font-size: 13px;
 }
 
 .admin-isbn-camera-actions button:hover {
-  background: #222;
+  background: var(--surface-1);
 }
 
 .admin-record-form {
   margin-top: 24px;
   padding-top: 20px;
-  border-top: 1px solid #333;
+  border-top: 1px solid var(--border);
   max-width: 480px;
 }
 
@@ -714,11 +774,11 @@ button {
 }
 
 .admin-checklist-item.pending {
-  color: #999;
+  color: var(--text-muted);
 }
 
 .admin-checklist-item.done {
-  color: #a8e6b0;
+  color: var(--status-available-fg);
 }
 
 #admin-scan-qr-btn,
@@ -753,13 +813,13 @@ button {
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: #999;
+  color: var(--text-muted);
 }
 
 .admin-record-field input {
-  background: #222;
-  border: 1px solid #444;
-  color: #f0f0f0;
+  background: var(--surface-1);
+  border: 1px solid var(--border-strong);
+  color: var(--text-primary);
   padding: 6px 8px;
   font-size: 13px;
   font-family: inherit;
@@ -777,16 +837,16 @@ button {
 }
 
 .admin-picker-btn {
-  background: #222;
-  border: 1px solid #444;
-  color: #ccc;
+  background: var(--surface-1);
+  border: 1px solid var(--border-strong);
+  color: var(--text-soft);
   cursor: pointer;
   padding: 0 8px;
   font-size: 12px;
 }
 
 .admin-picker-btn:hover {
-  color: #fff;
+  color: var(--white);
 }
 
 .admin-picker-popup {
@@ -796,8 +856,8 @@ button {
   right: 0;
   z-index: 10;
   margin-top: 2px;
-  background: #181818;
-  border: 1px solid #444;
+  background: var(--surface-deep);
+  border: 1px solid var(--border-strong);
   max-height: 220px;
   overflow-y: auto;
   padding: 6px;
@@ -822,7 +882,7 @@ button {
 }
 
 .admin-picker-empty {
-  color: #666;
+  color: var(--text-faint);
   font-size: 12px;
   padding: 3px 2px 8px;
 }
@@ -832,15 +892,15 @@ button {
   gap: 4px;
   margin-top: 6px;
   padding-top: 6px;
-  border-top: 1px solid #333;
+  border-top: 1px solid var(--border);
 }
 
 .admin-picker-add input {
   flex: 1;
   min-width: 0;
-  background: #222;
-  border: 1px solid #444;
-  color: #f0f0f0;
+  background: var(--surface-1);
+  border: 1px solid var(--border-strong);
+  color: var(--text-primary);
   padding: 4px 6px;
   font-size: 12px;
   font-family: inherit;
@@ -848,9 +908,9 @@ button {
 
 .admin-picker-add button,
 .admin-picker-done {
-  background: #000;
-  border: 1px solid #fff;
-  color: #f0f0f0;
+  background: var(--black);
+  border: 1px solid var(--white);
+  color: var(--text-primary);
   padding: 4px 10px;
   cursor: pointer;
   font-size: 12px;
@@ -858,7 +918,7 @@ button {
 
 .admin-picker-add button:hover,
 .admin-picker-done:hover {
-  background: #222;
+  background: var(--surface-1);
 }
 
 .admin-picker-done {
@@ -867,23 +927,23 @@ button {
 }
 
 #admin-record-approve-btn {
-  background: #000;
-  border: 1px solid #fff;
-  color: #f0f0f0;
+  background: var(--black);
+  border: 1px solid var(--white);
+  color: var(--text-primary);
   padding: 8px 14px;
   cursor: pointer;
   font-size: 13px;
 }
 
 #admin-record-approve-btn:hover {
-  background: #222;
+  background: var(--surface-1);
 }
 
 .admin-isbn-warning {
   grid-column: 1 / -1;
-  background: #3a2c10;
-  border: 1px solid #7a5a1e;
-  color: #e6c675;
+  background: var(--notice-warn-bg);
+  border: 1px solid var(--notice-warn-border);
+  color: var(--notice-warn-fg);
   padding: 8px 10px;
   font-size: 12px;
   line-height: 1.5;
@@ -899,21 +959,21 @@ button {
 }
 
 .admin-record-save-status.pending {
-  background: #222;
-  border: 1px solid #444;
-  color: #ccc;
+  background: var(--surface-1);
+  border: 1px solid var(--border-strong);
+  color: var(--text-soft);
 }
 
 .admin-record-save-status.success {
-  background: #16321f;
-  border: 1px solid #2e6b45;
-  color: #7fd99a;
+  background: var(--notice-success-bg);
+  border: 1px solid var(--notice-success-border);
+  color: var(--notice-success-fg);
 }
 
 .admin-record-save-status.error {
-  background: #3a1f1f;
-  border: 1px solid #7a3a3a;
-  color: #e69595;
+  background: var(--notice-error-bg);
+  border: 1px solid var(--notice-error-border);
+  color: var(--notice-error-fg);
 }
 
 .admin-record-output {
@@ -925,15 +985,15 @@ button {
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: #999;
+  color: var(--text-muted);
   margin-bottom: 6px;
 }
 
 .admin-record-csv {
   width: 100%;
-  background: #222;
-  border: 1px solid #444;
-  color: #f0f0f0;
+  background: var(--surface-1);
+  border: 1px solid var(--border-strong);
+  color: var(--text-primary);
   padding: 8px;
   font-size: 12px;
   font-family: "Courier New", monospace;
@@ -942,16 +1002,16 @@ button {
 }
 
 #admin-record-copy-btn {
-  background: #000;
-  border: 1px solid #fff;
-  color: #f0f0f0;
+  background: var(--black);
+  border: 1px solid var(--white);
+  color: var(--text-primary);
   padding: 8px 14px;
   cursor: pointer;
   font-size: 13px;
 }
 
 #admin-record-copy-btn:hover {
-  background: #222;
+  background: var(--surface-1);
 }
 
 .admin-isbn-entry {
@@ -965,13 +1025,13 @@ button {
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: #999;
+  color: var(--text-muted);
 }
 
 .admin-isbn-entry input {
-  background: #222;
-  border: 1px solid #444;
-  color: #f0f0f0;
+  background: var(--surface-1);
+  border: 1px solid var(--border-strong);
+  color: var(--text-primary);
   padding: 8px;
   font-size: 14px;
   font-family: "Courier New", monospace;
@@ -979,21 +1039,76 @@ button {
 
 .admin-isbn-entry button {
   align-self: flex-start;
-  background: #000;
-  border: 1px solid #fff;
-  color: #f0f0f0;
+  background: var(--black);
+  border: 1px solid var(--white);
+  color: var(--text-primary);
   padding: 8px 14px;
   cursor: pointer;
   font-size: 13px;
 }
 
 .admin-isbn-entry button:hover {
-  background: #222;
+  background: var(--surface-1);
 }
 
 .admin-isbn-result {
   margin: 12px 0 0;
   font-size: 14px;
-  color: #f0f0f0;
+  color: var(--text-primary);
   font-family: "Courier New", monospace;
+}
+
+/* Before/after diff shown when Approve would overwrite an existing record
+   (see showDiffConfirm in admin.js) — wider than the default scan modal
+   since it needs three columns of text to stay readable. */
+.admin-diff-modal-content {
+  width: min(90vw, 640px);
+}
+
+.admin-diff-header,
+.admin-diff-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: 13px;
+}
+
+.admin-diff-header {
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.admin-diff-list {
+  max-height: 45vh;
+  overflow-y: auto;
+}
+
+.admin-diff-row {
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.admin-diff-label {
+  color: var(--text-soft);
+}
+
+.admin-diff-old {
+  color: var(--diff-old);
+  text-decoration: line-through;
+  word-break: break-word;
+}
+
+.admin-diff-new {
+  color: var(--diff-new);
+  word-break: break-word;
+}
+
+.admin-diff-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
 }
