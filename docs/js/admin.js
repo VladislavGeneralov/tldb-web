@@ -1,23 +1,25 @@
 // TLDB Web — admin panel stub.
 //
-// IMPORTANT: this is a placeholder gate, not real security. The password
-// is a plain string sitting in this file, downloadable and readable by
-// anyone via view-source — it only deters casual clicks, it does not
-// protect anything. Real access control needs a backend (see project
-// notes on the future admin panel) and should replace this entirely.
+// The password gate is checked server-side by a Cloudflare Worker
+// (see worker/src/index.js) so the real password never ships in this
+// file or any other client JS — view-source no longer reveals it.
+// The "unlocked" flag below is still just a client-side UI flag once
+// the Worker confirms the password, same as before: there's nothing
+// sensitive behind the gate yet (no backend save), so that's fine.
 
 import { isValidIsbn13, extractIsbn13, guessIsbnRegion, looksTransliterated } from './isbn.js';
 import { lookupIsbn } from './isbnLookup.js';
 import { COLUMNS, loadBooks, deriveFilterOptions } from './data.js';
 import { CodeScanner, validateTLId, isScanSupported } from './codeScan.js';
 
-const ADMIN_PASSWORD = 'admin00';
+const AUTH_ENDPOINT = 'https://tldb-admin-auth.ptntonesix.workers.dev/check-password';
 const SESSION_KEY = 'tldb-admin-unlocked';
 
 const gate = document.getElementById('admin-gate');
 const gateForm = document.getElementById('admin-gate-form');
 const gateInput = document.getElementById('admin-gate-input');
 const gateError = document.getElementById('admin-gate-error');
+const gateSubmit = gateForm.querySelector('button[type="submit"]');
 const panel = document.getElementById('admin-panel');
 
 function unlock() {
@@ -29,15 +31,29 @@ if (sessionStorage.getItem(SESSION_KEY) === '1') {
   unlock();
 }
 
-gateForm.addEventListener('submit', (e) => {
+gateForm.addEventListener('submit', async (e) => {
   e.preventDefault();
-  if (gateInput.value === ADMIN_PASSWORD) {
-    sessionStorage.setItem(SESSION_KEY, '1');
-    unlock();
-  } else {
-    gateError.textContent = 'Incorrect password.';
-    gateInput.value = '';
-    gateInput.focus();
+  gateError.textContent = '';
+  gateSubmit.disabled = true;
+  try {
+    const res = await fetch(AUTH_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: gateInput.value }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      sessionStorage.setItem(SESSION_KEY, '1');
+      unlock();
+    } else {
+      gateError.textContent = 'Incorrect password.';
+      gateInput.value = '';
+      gateInput.focus();
+    }
+  } catch {
+    gateError.textContent = 'Could not reach the auth server — check your connection and try again.';
+  } finally {
+    gateSubmit.disabled = false;
   }
 });
 
