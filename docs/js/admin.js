@@ -539,6 +539,16 @@ const SKIP_COMPLETENESS_CHECK = new Set(['num', 'qrLink']);
 const REQUIRED_TO_APPROVE = new Set(['bookId', 'name', 'authors', 'status', 'createdAt', 'updatedAt']);
 
 recordApproveBtn.addEventListener('click', async () => {
+  // Set at the moment of the actual save, not whenever the form happened
+  // to be loaded/opened — matters both for a fresh record filled out over
+  // several minutes and for an existing one loaded via
+  // checkBookIdForExisting (which otherwise leaves this at its old,
+  // pre-edit value). REC CREATION DATE is untouched here on purpose: it
+  // should stay today for a new record (already set by initialDefaults)
+  // and stay as the original date for an edit (already loaded by
+  // checkBookIdForExisting).
+  setRecordField('updatedAt', todayFormatted());
+
   const missingRequired = COLUMNS.filter(
     (col) => REQUIRED_TO_APPROVE.has(col.id) && !getRecordField(col.id).trim()
   ).map((col) => col.label);
