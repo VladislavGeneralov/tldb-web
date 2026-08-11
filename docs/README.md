@@ -50,10 +50,10 @@ works too.)
   finer bar spacing needs more resolution than QR's built-in redundancy
   tolerates.
 - **`admin.html`** — new-record draft tool, linked from the small "ADMIN"
-  link above the logo. Gated by a plain client-side password prompt
-  (`js/admin.js`, password `admin00`) — **not real security**, the
-  password is a readable string in a public repo, it only deters casual
-  clicks. The record form is always visible: **Scan QR** sets BOOK ID
+  link above the logo. Gated by a password prompt (`js/admin.js`) that
+  is checked server-side by a Cloudflare Worker (`worker/`) — the real
+  password lives only as a Worker secret, never in this repo or any
+  client JS. The record form is always visible: **Scan QR** sets BOOK ID
   (same `codeScan.js` decoder as the public SCAN button); ISBN capture
   uses a live camera preview with a guide box + OCR (`Tesseract.js`, from
   CDN) on just that cropped region — EAN-13 barcode decoding was tried
