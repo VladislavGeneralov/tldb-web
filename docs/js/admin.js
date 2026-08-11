@@ -268,16 +268,15 @@ let CATALOG_BOOKS = [];
 loadBooks().then((books) => {
   CATALOG_BOOKS = books;
 
+  // PUBLISHER is multiValue now (co-publications like "Ад Маргинем Пресс;
+  // Garage" are common, ~40 of 700 books) so deriveFilterOptions splits it
+  // into individual publisher names the same way it already does for
+  // LANGUAGE(S)/GENRE(S), instead of treating each combination as its own
+  // option.
   const derived = deriveFilterOptions(books);
   PICKER_OPTIONS.languages.push(...(derived.languages || []));
   PICKER_OPTIONS.genres.push(...(derived.genres || []));
-
-  const publishers = new Set();
-  for (const b of books) {
-    const v = (b.publisher || '').trim();
-    if (v) publishers.add(v);
-  }
-  PICKER_OPTIONS.publisher.push(...[...publishers].sort((a, b) => a.localeCompare(b)));
+  PICKER_OPTIONS.publisher.push(...(derived.publisher || []));
 }).catch(() => {
   // catalog failed to load — pickers just show only "Add new", still usable
 });
@@ -348,7 +347,7 @@ function renderRecordFields(values) {
       row.className = 'admin-record-input-row';
       row.appendChild(input);
       wrap.appendChild(row);
-      attachPicker(row, input, PICKER_OPTIONS[col.id], col.id !== 'publisher');
+      attachPicker(row, input, PICKER_OPTIONS[col.id]);
     } else {
       wrap.appendChild(input);
     }
@@ -375,7 +374,11 @@ document.getElementById('record-bookId').addEventListener('blur', () => {
   checkBookIdForExisting(getRecordField('bookId').trim());
 });
 
-function attachPicker(wrap, input, options, multi) {
+// Always multi-select (checkboxes): LANGUAGE(S)/GENRE(S)/PUBLISHER all
+// legitimately have more than one value on real books (co-publications,
+// multiple languages in one edition, etc.) — see project notes on why
+// PUBLISHER joined this list (~40 of 700 books have 2-3 co-publishers).
+function attachPicker(wrap, input, options) {
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.className = 'admin-picker-btn';
@@ -387,9 +390,7 @@ function attachPicker(wrap, input, options, multi) {
   popup.hidden = true;
 
   function currentValues() {
-    return multi
-      ? input.value.split(';').map((s) => s.trim()).filter(Boolean)
-      : [input.value.trim()].filter(Boolean);
+    return input.value.split(';').map((s) => s.trim()).filter(Boolean);
   }
 
   function renderList() {
@@ -408,19 +409,13 @@ function attachPicker(wrap, input, options, multi) {
       item.className = 'admin-picker-item';
 
       const control = document.createElement('input');
-      control.type = multi ? 'checkbox' : 'radio';
-      if (!multi) control.name = `picker-${input.id}`;
+      control.type = 'checkbox';
       control.checked = selected.includes(opt);
       control.addEventListener('change', () => {
-        if (multi) {
-          const set = new Set(currentValues());
-          if (control.checked) set.add(opt);
-          else set.delete(opt);
-          input.value = [...set].join('; ');
-        } else {
-          input.value = opt;
-          popup.hidden = true;
-        }
+        const set = new Set(currentValues());
+        if (control.checked) set.add(opt);
+        else set.delete(opt);
+        input.value = [...set].join('; ');
       });
 
       // Text in its own flex:1 span (not a bare text node) so it reliably
@@ -449,16 +444,11 @@ function attachPicker(wrap, input, options, multi) {
         options.push(val);
         options.sort((a, b) => a.localeCompare(b));
       }
-      if (multi) {
-        const set = new Set(currentValues());
-        set.add(val);
-        input.value = [...set].join('; ');
-      } else {
-        input.value = val;
-      }
+      const set = new Set(currentValues());
+      set.add(val);
+      input.value = [...set].join('; ');
       addInput.value = '';
       renderList();
-      if (!multi) popup.hidden = true;
     }
 
     addBtn.addEventListener('click', addNew);
@@ -472,14 +462,12 @@ function attachPicker(wrap, input, options, multi) {
     addRow.append(addInput, addBtn);
     popup.appendChild(addRow);
 
-    if (multi) {
-      const doneBtn = document.createElement('button');
-      doneBtn.type = 'button';
-      doneBtn.className = 'admin-picker-done';
-      doneBtn.textContent = 'Done';
-      doneBtn.addEventListener('click', () => { popup.hidden = true; });
-      popup.appendChild(doneBtn);
-    }
+    const doneBtn = document.createElement('button');
+    doneBtn.type = 'button';
+    doneBtn.className = 'admin-picker-done';
+    doneBtn.textContent = 'Done';
+    doneBtn.addEventListener('click', () => { popup.hidden = true; });
+    popup.appendChild(doneBtn);
   }
 
   btn.addEventListener('click', () => {

@@ -460,10 +460,6 @@ button {
   z-index: 100;
 }
 
-.scan-modal[hidden] {
-  display: none;
-}
-
 .scan-modal-content {
   background: #181818;
   border: 1px solid #333;
@@ -639,10 +635,6 @@ button {
   object-fit: contain;
   background: #000;
   margin-top: 12px;
-}
-
-.admin-isbn-photo-preview[hidden] {
-  display: none;
 }
 
 .admin-isbn-camera-wrap {

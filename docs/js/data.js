@@ -10,7 +10,7 @@ export const COLUMNS = [
   { id: 'bookId', label: 'BOOK ID', kind: 'text' },
   { id: 'authors', label: 'AUTHOR(S)', kind: 'text', multiValue: true },
   { id: 'name', label: 'BOOK NAME', kind: 'text' },
-  { id: 'publisher', label: 'PUBLISHER', kind: 'text' },
+  { id: 'publisher', label: 'PUBLISHER', kind: 'multiselect', multiValue: true },
   { id: 'year', label: 'YEAR', kind: 'text', numeric: true },
   { id: 'isbn', label: 'ISBN', kind: 'text' },
   { id: 'languages', label: 'LANGUAGE(S)', kind: 'multiselect', multiValue: true },

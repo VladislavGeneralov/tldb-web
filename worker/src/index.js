@@ -113,7 +113,7 @@ async function handleSaveBook(request, env) {
   }
 
   const book = body.book && typeof body.book === 'object' ? body.book : {};
-  if (!BOOK_ID_PATTERN.test(book.bookId || '')) {
+  if (!BOOK_ID_PATTERN.test(String(book.bookId || '').trim())) {
     return jsonResponse({ ok: false, error: 'invalid or missing bookId' }, 400);
   }
   const missing = REQUIRED_FIELDS.filter((f) => !String(book[f] || '').trim());
@@ -156,8 +156,14 @@ async function handleBackupNow(request, env) {
 // produce a no-op commit every single week. Returns true if a commit was
 // made, false if the content was already up to date.
 async function backupToGithub(env) {
+  // ORDER BY bookId, not rowid: INSERT OR REPLACE deletes-then-reinserts
+  // on a bookId conflict, which assigns the row a new (higher) rowid — so
+  // editing an existing book would silently move it to the bottom of
+  // every future backup CSV under rowid ordering. bookId order is stable
+  // regardless of edit history, and happens to already be the order the
+  // public GET /books uses.
   const { results } = await env.DB.prepare(
-    `SELECT ${DB_COLUMNS.join(', ')} FROM books ORDER BY rowid`
+    `SELECT ${DB_COLUMNS.join(', ')} FROM books ORDER BY bookId`
   ).all();
 
   const header = CSV_COLUMNS.map(([, label]) => csvField(label)).join(',');
