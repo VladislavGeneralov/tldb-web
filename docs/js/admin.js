@@ -257,7 +257,17 @@ const NO_VISIBLE_FIELD = new Set(['num', 'qrLink', 'imageLink']);
 // from it immediately.
 const PICKER_OPTIONS = { languages: [], genres: [], publisher: [] };
 
+// Loaded once alongside PICKER_OPTIONS, kept around so a scanned/typed
+// BOOK ID can be checked against the real catalog before Approve — see
+// checkBookIdForExisting below. Approve now actually saves (INSERT OR
+// REPLACE by BOOK ID), so silently "starting a new record" on an ID that
+// already exists would overwrite that book's real data with a mostly
+// blank draft; this is what stops that.
+let CATALOG_BOOKS = [];
+
 loadBooks().then((books) => {
+  CATALOG_BOOKS = books;
+
   const derived = deriveFilterOptions(books);
   PICKER_OPTIONS.languages.push(...(derived.languages || []));
   PICKER_OPTIONS.genres.push(...(derived.genres || []));
@@ -271,6 +281,29 @@ loadBooks().then((books) => {
 }).catch(() => {
   // catalog failed to load — pickers just show only "Add new", still usable
 });
+
+// Called whenever BOOK ID is set (QR scan or manual typing/paste). If that
+// ID already has a record, loads its real data into the form instead of
+// leaving the admin's blank draft fields to silently overwrite it on
+// Approve — turns an accidental overwrite into a visible, intentional
+// edit. CATALOG_BOOKS may still be empty if the catalog hasn't finished
+// loading yet; in that case this can't detect a collision, same limit as
+// PICKER_OPTIONS above.
+function checkBookIdForExisting(bookId) {
+  const existing = CATALOG_BOOKS.find((b) => b.bookId === bookId);
+  if (!existing) return;
+
+  for (const col of COLUMNS) setRecordField(col.id, existing[col.id] || '');
+  // Only reflects "this data is already known", not "a scan happened" —
+  // don't mark checklistQr here, callers that actually scanned a QR
+  // already set it themselves before calling this.
+  if (existing.isbn) setChecklist(checklistIsbn, true);
+  showRecordNotice(
+    `⚠ ${bookId} already exists in the catalog (${existing.name || 'untitled'} — ` +
+    `${existing.authors || 'unknown author'}). Loaded its current data — Approve will ` +
+    `update this record, not create a new one.`
+  );
+}
 
 function renderRecordFields(values) {
   recordFields.innerHTML = '';
@@ -335,6 +368,12 @@ function getRecordField(id) {
 }
 
 renderRecordFields(initialDefaults());
+
+// Covers manually typing/pasting a BOOK ID (not just scanning it) — see
+// checkBookIdForExisting above for why this check exists at all.
+document.getElementById('record-bookId').addEventListener('blur', () => {
+  checkBookIdForExisting(getRecordField('bookId').trim());
+});
 
 function attachPicker(wrap, input, options, multi) {
   const btn = document.createElement('button');
@@ -614,6 +653,7 @@ async function openQrScanner() {
       setRecordField('bookId', rawValue);
       setChecklist(checklistQr, true);
       syncCoverFilename();
+      checkBookIdForExisting(rawValue);
     });
   } catch (e) {
     qrStatus.textContent = 'Could not access the camera. Check browser permissions.';
