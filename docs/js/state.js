@@ -51,13 +51,31 @@ export function applyFilters(state) {
   if (state.sort.columnId) {
     const { columnId, direction } = state.sort;
     const dir = direction === 'asc' ? 1 : -1;
-    results = results.slice().sort((a, b) => {
-      const av = (a[columnId] || '').toLowerCase();
-      const bv = (b[columnId] || '').toLowerCase();
-      if (av < bv) return -1 * dir;
-      if (av > bv) return 1 * dir;
-      return 0;
-    });
+    const col = COLUMNS.find((c) => c.id === columnId);
+
+    if (col && col.numeric) {
+      // String comparison puts "10" before "2" — wrong for №/YEAR/CONDITION,
+      // which hold numbers of varying digit counts. Blanks/non-numeric
+      // values always sort last, regardless of direction.
+      results = results.slice().sort((a, b) => {
+        const an = parseFloat(a[columnId]);
+        const bn = parseFloat(b[columnId]);
+        const aValid = !Number.isNaN(an);
+        const bValid = !Number.isNaN(bn);
+        if (!aValid && !bValid) return 0;
+        if (!aValid) return 1;
+        if (!bValid) return -1;
+        return (an - bn) * dir;
+      });
+    } else {
+      results = results.slice().sort((a, b) => {
+        const av = (a[columnId] || '').toLowerCase();
+        const bv = (b[columnId] || '').toLowerCase();
+        if (av < bv) return -1 * dir;
+        if (av > bv) return 1 * dir;
+        return 0;
+      });
+    }
   }
 
   state.results = results;

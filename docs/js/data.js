@@ -6,16 +6,16 @@
 // but is no longer read by the running site.
 
 export const COLUMNS = [
-  { id: 'num', label: '№', kind: 'text' },
+  { id: 'num', label: '№', kind: 'text', numeric: true },
   { id: 'bookId', label: 'BOOK ID', kind: 'text' },
   { id: 'authors', label: 'AUTHOR(S)', kind: 'text', multiValue: true },
   { id: 'name', label: 'BOOK NAME', kind: 'text' },
   { id: 'publisher', label: 'PUBLISHER', kind: 'text' },
-  { id: 'year', label: 'YEAR', kind: 'text' },
+  { id: 'year', label: 'YEAR', kind: 'text', numeric: true },
   { id: 'isbn', label: 'ISBN', kind: 'text' },
   { id: 'languages', label: 'LANGUAGE(S)', kind: 'multiselect', multiValue: true },
   { id: 'genres', label: 'GENRE(S)', kind: 'multiselect', multiValue: true },
-  { id: 'condition', label: 'CONDITION (0-5)', kind: 'singleselect' },
+  { id: 'condition', label: 'CONDITION (0-5)', kind: 'singleselect', numeric: true },
   { id: 'status', label: 'STATUS', kind: 'singleselect' },
   { id: 'createdAt', label: 'REC CREATION DATE', kind: 'text' },
   { id: 'updatedAt', label: 'REC UPDATE DATE', kind: 'text' },

@@ -487,6 +487,16 @@ function attachPicker(wrap, input, options, multi) {
     if (!popup.hidden) renderList();
   });
 
+  // Closes the popup on an outside click. Safe against the toggle click
+  // above re-opening it: that click's target (btn, or anything inside
+  // popup) is always contained in wrap, so this only fires for clicks
+  // genuinely outside it.
+  document.addEventListener('click', (e) => {
+    if (!popup.hidden && !wrap.contains(e.target)) {
+      popup.hidden = true;
+    }
+  });
+
   wrap.appendChild(btn);
   wrap.appendChild(popup);
 }
