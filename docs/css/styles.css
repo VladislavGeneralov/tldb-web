@@ -210,6 +210,7 @@ button {
 .multiselect-item {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 6px;
   font-size: 12px;
 }
@@ -788,6 +789,7 @@ button {
 .admin-picker-item {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 6px;
   font-size: 12px;
   padding: 3px 2px;

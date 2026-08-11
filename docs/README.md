@@ -51,7 +51,7 @@ works too.)
   tolerates.
 - **`admin.html`** — new-record draft tool, linked from the small "ADMIN"
   link above the logo. Gated by a plain client-side password prompt
-  (`js/admin.js`, password `TLDBadmin00`) — **not real security**, the
+  (`js/admin.js`, password `admin00`) — **not real security**, the
   password is a readable string in a public repo, it only deters casual
   clicks. The record form is always visible: **Scan QR** sets BOOK ID
   (same `codeScan.js` decoder as the public SCAN button); ISBN capture

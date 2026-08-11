@@ -11,7 +11,7 @@ import { lookupIsbn } from './isbnLookup.js';
 import { COLUMNS, loadBooks, deriveFilterOptions } from './data.js';
 import { CodeScanner, validateTLId, isScanSupported } from './codeScan.js';
 
-const ADMIN_PASSWORD = 'TLDBadmin00';
+const ADMIN_PASSWORD = 'admin00';
 const SESSION_KEY = 'tldb-admin-unlocked';
 
 const gate = document.getElementById('admin-gate');
@@ -339,7 +339,11 @@ function attachPicker(wrap, input, options, multi) {
         }
       });
 
-      item.append(control, document.createTextNode(' ' + opt));
+      // Text then control (not control-first): with text left-aligned and
+      // the checkbox/radio pinned to the row's right edge (see
+      // .admin-picker-item's justify-content), they line up in a column
+      // regardless of each option's text length.
+      item.append(document.createTextNode(opt), control);
       popup.appendChild(item);
     }
 
