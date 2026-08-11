@@ -339,11 +339,13 @@ function attachPicker(wrap, input, options, multi) {
         }
       });
 
-      // Text then control (not control-first): with text left-aligned and
-      // the checkbox/radio pinned to the row's right edge (see
-      // .admin-picker-item's justify-content), they line up in a column
-      // regardless of each option's text length.
-      item.append(document.createTextNode(opt), control);
+      // Text in its own flex:1 span (not a bare text node) so it reliably
+      // fills the remaining row width, pushing control to sit flush at the
+      // row's right edge — lines up in a column regardless of text length.
+      const text = document.createElement('span');
+      text.className = 'admin-picker-item-text';
+      text.textContent = opt;
+      item.append(text, control);
       popup.appendChild(item);
     }
 

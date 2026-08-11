@@ -108,14 +108,14 @@ function renderMultiSelect(col, state, options, onChange) {
       onChange();
     });
 
-    // Checkbox after the text (not before): with text left-aligned and
-    // checkboxes pinned to the row's right edge, checkboxes line up in a
-    // column regardless of how long each value's text is — checkbox-first
-    // left them at a consistent X too, but only until values of very
-    // different lengths made rows visually ragged in a way that read as
-    // "not lined up" (this list mixes short 3-letter codes with much
-    // longer full names now).
-    item.append(document.createTextNode(val), checkbox);
+    // Text in its own flex:1 span (not a bare text node) so it reliably
+    // fills the remaining row width, pushing the checkbox to sit flush at
+    // the row's right edge — lines up in a column regardless of text
+    // length (this list mixes short 3-letter codes with full names now).
+    const text = document.createElement('span');
+    text.className = 'multiselect-item-text';
+    text.textContent = val;
+    item.append(text, checkbox);
     wrap.appendChild(item);
   }
 

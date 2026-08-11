@@ -210,9 +210,17 @@ button {
 .multiselect-item {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 6px;
   font-size: 12px;
+}
+
+.multiselect-item-text {
+  flex: 1;
+  text-align: left;
+}
+
+.multiselect-item input[type="checkbox"] {
+  flex-shrink: 0;
 }
 
 .multiselect-empty {
@@ -789,11 +797,19 @@ button {
 .admin-picker-item {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 6px;
   font-size: 12px;
   padding: 3px 2px;
   cursor: pointer;
+}
+
+.admin-picker-item-text {
+  flex: 1;
+  text-align: left;
+}
+
+.admin-picker-item input {
+  flex-shrink: 0;
 }
 
 .admin-picker-empty {
